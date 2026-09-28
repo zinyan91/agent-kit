@@ -11,7 +11,7 @@ description: Sự thật về máy dev này — đường dẫn repo, công cụ
 | Web admin WinHelper | `D:\AdminWinHelper` | `zinyan91/winhelper-admin` |
 | CustomerManager | `D:\CustomerManager` | `zinyan91/CustomerManager` |
 | Felix PDF | `D:\pdf-toolkit` | `zinyan91/Felix-pdf` |
-| App client WinHelper/Felix (.NET) | `E:\WinHelper` | **không có remote** |
+| App client WinHelper/Felix (.NET) | `D:\OneDrive - International concept for education\Backup Felix\Felix App\WinHelper` | `zinyan91/Felix` (private) |
 | Bộ skill/hook/luật dùng chung | `D:\agent-kit` | `zinyan91/agent-kit` |
 
 `winhelper-hub` và `winhelper-api` không còn trên máy (có trên GitHub + Vercel).
