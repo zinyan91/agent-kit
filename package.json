@@ -1,0 +1,10 @@
+{
+  "name": "agent-kit",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/",
+    "cai": "node install.mjs",
+    "kiem": "node install.mjs --kiem"
+  }
+}

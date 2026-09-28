@@ -1,0 +1,11 @@
+{
+  "congCu": {
+    "claude": { "skills": "~/.claude/skills" },
+    "codex": { "skills": "~/.codex/skills", "tepLuat": "~/.codex/AGENTS.md" },
+    "antigravity": { "skills": "~/.gemini/config/skills", "thuMucLuat": "~/.gemini/config/rules" }
+  },
+  "chiVao": {
+    "nha-anh-chatgpt": ["codex"],
+    "codex-with-chatgpt": ["codex"]
+  }
+}
