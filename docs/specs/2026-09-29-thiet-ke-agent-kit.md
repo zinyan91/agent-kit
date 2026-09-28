@@ -35,6 +35,9 @@ Cấp người dùng:
 Phát hiện ngoài lề, sẽ sửa trong luật:
 
 - `D:\WinHelper` đã dời sang **`E:\WinHelper`** — vẫn có git, **vẫn không có remote**.
+  *Đính chính cùng ngày (người dùng chỉ ra): bản thật ở
+  `D:\OneDrive - International concept for education\Backup Felix\Felix App\WinHelper`, **có remote**
+  `zinyan91/Felix` (private) và đồng bộ với `origin/main`; `E:\WinHelper` không còn tồn tại.*
 - `D:\winhelper-hub` và `D:\winhelper-api` **không còn trên máy** (có trên GitHub + Vercel nên không mất,
   chỉ chưa clone lại). `CLAUDE.md` của Admin đang ghi sai cả ba đường dẫn.
 - `CustomerManager/AGENTS.md` mục 5 (chuẩn hoá danh mục ISO Windows) thuộc WinHelper, đặt nhầm repo.
@@ -336,7 +339,7 @@ CustomerManager lúc này sẽ xanh giả, vì bản cũ trong repo trả lời 
 
 ## 11. Ngoài phạm vi
 
-- Clone lại `winhelper-hub`, `winhelper-api`; tạo remote cho `E:\WinHelper` (rủi ro lớn nhất hệ thống — nên làm, nhưng là việc riêng).
+- Clone lại `winhelper-hub`, `winhelper-api`. (Remote cho app client: đã có sẵn — `zinyan91/Felix`, xem đính chính ở mục 2.)
 - Đóng gói plugin cho Codex (`.codex-plugin`) — Codex không cần: skill đi junction, luật đi `AGENTS.md`.
 - Bộ skill thiết kế của CustomerManager.
 - `.agents/plugins/superpowers` trong các repo.
