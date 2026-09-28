@@ -20,6 +20,7 @@ Sửa luật chung ở `D:\agent-kit\rules`, rồi chạy `node D:\agent-kit\ins
 ## Bẫy môi trường
 - **Kaspersky quét HTTPS**: Node lỗi `self-signed certificate in certificate chain`. Chạy với `NODE_OPTIONS=--use-system-ca`. Cấm `NODE_TLS_REJECT_UNAUTHORIZED=0`. Kaspersky cũng chặn `r2.dev`.
 - **ACL Codex sandbox**: tệp do Codex tạo có thể không xoá/đổi tên được ("Permission denied", "unable to unlink"). Không phải tiến trình khoá — đừng tắt tiến trình. Ghi đè tại chỗ, `git rm --cached`; cần xoá thật thì nhờ người dùng.
+- **Kiểm nhánh trước khi tách nhánh riêng**: repo có thể đang đứng ở nhánh feature dở dang, không phải `main`. Tách từ đó rồi gộp vào `main` là đẩy luôn việc dở của người dùng. Tách từ `origin/main`, và tránh `git checkout` qua lại giữa hai nhánh khác xa nhau: tệp mang ACL Codex không gỡ được làm checkout hỏng giữa chừng (cắn 29/09/2026 ở pdf-toolkit; gỡ bằng `git symbolic-ref HEAD` + `git reset` + `git checkout -- .`).
 - **Git Bash đổi `/ten` thành đường dẫn** (`C:/Program Files/Git/ten`) khi làm đối số: gọi CLI có đối số `/…` qua PowerShell.
 - **Không có danh tính git toàn cục**: mỗi repo tự đặt `user.name`/`user.email` cục bộ.
 - **Claude Code — subagent gần như không dùng được** khi phiên nạp MCP Supabase + Vercel + Cloudflare: khởi động đã gần đầy ngữ cảnh, chết "Autocompact is thrashing". Tự làm; subagent chỉ để review đúng một diff, yêu cầu viết thẳng trong prompt.
