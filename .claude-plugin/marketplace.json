@@ -1,0 +1,13 @@
+{
+  "name": "agent-kit",
+  "description": "Marketplace cục bộ của D:\\agent-kit",
+  "owner": { "name": "zinyan91" },
+  "plugins": [
+    {
+      "name": "agent-kit",
+      "description": "Hook và luật chung cho mọi repo trên máy này.",
+      "version": "1.0.0",
+      "source": "./plugin"
+    }
+  ]
+}

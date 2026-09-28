@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { bocFrontmatter, ghepLuat, demDong } from '../lib/luat.mjs';
+import { bocFrontmatter, ghepLuat, demDong } from '../plugin/hooks/lib/luat.mjs';
 
 test('bóc frontmatter đầu tệp', () => {
   assert.equal(bocFrontmatter('---\ntrigger: always_on\n---\n\n# Tiêu đề\nnội dung\n'), '# Tiêu đề\nnội dung');
