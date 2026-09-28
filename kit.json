@@ -1,11 +1,27 @@
 {
   "congCu": {
-    "claude": { "skills": "~/.claude/skills" },
-    "codex": { "skills": "~/.codex/skills", "tepLuat": "~/.codex/AGENTS.md" },
-    "antigravity": { "skills": "~/.gemini/config/skills", "thuMucLuat": "~/.gemini/config/rules" }
+    "claude": {
+      "skills": "~/.claude/skills"
+    },
+    "codex": {
+      "skills": "~/.codex/skills",
+      "tepLuat": "~/.codex/AGENTS.md"
+    },
+    "antigravity": {
+      "skills": "~/.gemini/config/skills",
+      "thuMucLuat": "~/.gemini/config/rules"
+    }
   },
   "chiVao": {
-    "nha-anh-chatgpt": ["codex"],
-    "codex-with-chatgpt": ["codex"]
-  }
+    "nha-anh-chatgpt": [
+      "codex"
+    ],
+    "codex-with-chatgpt": [
+      "codex"
+    ]
+  },
+  "goBo": [
+    "~/.claude/commands/fp.md",
+    "~/.codex/prompts/fp.md"
+  ]
 }
