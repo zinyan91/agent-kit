@@ -47,3 +47,25 @@ for (const ten of VIET_LAI.filter((t) => tatCa.includes(t))) {
     });
   }
 }
+
+const docRef = (ten, tep) => fs.readFileSync(path.join(SKILLS, ten, tep), 'utf8');
+
+test('ui-design: hướng dẫn --allow cho bóng đổ nêu cả heavy-shadow của inspect --app', () => {
+  assert.match(doc('ui-design'), /--allow shadow,heavy-shadow/);
+});
+
+test('ui-design: không bảo đặt dòng chữ dưới tiêu đề khi luật chung cấm subtitle', () => {
+  for (const tep of ['SKILL.md', 'references/app-screens.md', 'references/public-page.md']) {
+    const s = docRef('ui-design', tep);
+    assert.doesNotMatch(s, /finding sits under the title|under the title or the headline figure/, tep);
+    for (const m of s.matchAll(/[^\n]*(second line|supporting sentence)[^\n]*/gi)) {
+      const doan = s.slice(Math.max(0, m.index - 300), m.index + 400);
+      assert.match(doan, /repo/i, `${tep}: "${m[0].trim().slice(0, 60)}" thiếu điều kiện luật repo`);
+    }
+  }
+});
+
+test('postgres: hàm security definer phải nằm ngoài schema được expose', () => {
+  assert.match(doc('postgres'), /private schema/i);
+  assert.match(doc('postgres'), /revoke execute/i);
+});

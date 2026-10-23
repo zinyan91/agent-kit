@@ -37,7 +37,9 @@ create index orders_user_id_idx on orders (user_id);
 ```
 
 For membership checks, use a `security definer` function with `set search_path = ''` and call it
-inside a sub-select: `using ((select is_team_member(team_id)))`.
+inside a sub-select: `using ((select is_team_member(team_id)))`. Put such functions in a private schema,
+not in one the API exposes (Supabase exposes `public` as RPC), and `revoke execute on function ... from
+public, anon` unless a role really needs to call it.
 
 **Secrets and service role.** Tables holding secrets are read only server-side with the service role;
 grant nothing on them to `anon` or `authenticated`. Apply least privilege: application roles get the
@@ -75,8 +77,9 @@ by range on the time column.
   `where`, a type change that rewrites data): back up the affected rows
   (`create table <name>_backup_YYYYMMDD as select ...`) and ask the user.
 - **Reconcile after a data migration**: count rows and compare key fields before and after, in SQL.
-- Add `not null` in steps on big tables: add the column nullable, backfill in batches, then add the
-  constraint (`not valid` then `validate constraint` for checks and foreign keys).
+- Add `not null` in steps on big tables: add the column nullable, backfill in batches, then
+  `add constraint c check (col is not null) not valid`, `validate constraint c`, `set not null` (no
+  rescan on PG12+), `drop constraint c`. Foreign keys likewise: `not valid`, then `validate`.
 - Create indexes on live tables with `create index concurrently` (outside a transaction).
 - Every migration is a file in the repo, applied in order; never hand-edit production schema.
 

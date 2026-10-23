@@ -78,8 +78,8 @@ Write the whole page as plain text before markup.
 - **Every headline fits in two lines or fewer at every width.** About 32 characters is safe at a
   confident size; the strongest gallery heroes have a median of five words. Cut words first, widen the
   measure second, shrink the size last.
-- **One supporting sentence** directly under the headline (32–48px below it), shown with it, never held
-  back by an animation. When the headline is a name or a figure of speech, this sentence says plainly
+- **One supporting sentence** directly under the headline (32–48px below it), when the repo allows it,
+  shown with it, never held back by an animation. When the headline is a name or a figure of speech, this sentence says plainly
   what the thing is.
 - **One primary action**, named for what it does ("Book a table", not "Get started"), as a real button
   on the first screen.

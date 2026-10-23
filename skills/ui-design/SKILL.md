@@ -83,8 +83,9 @@ real product screens from generated ones:
 8. **Data is honest.** Zeros print as zeros, missing values as a grey dash, totals add up from the rows.
 
 Before building, write down the screen's **one question** ("Which deploy broke?") and its **one
-finding** in today's data; the biggest block answers the question, the finding sits under the title
-next to the action it drives, and the most frequent job is one click away.
+finding** in today's data; the biggest block answers the question, the finding is shown inside that
+block or on the action it drives, and the most frequent job is one click away. A line of text under
+the title only when the repo allows explanatory text; the kit's shared rules ban subtitles by default.
 
 ## 4. Public pages (short form)
 
@@ -97,7 +98,8 @@ The full run is in `references/public-page.md`:
    competitor test: if the sentence still works with the nearest competitor's name in it, it is a
    category idea, not this client's.
 4. **Write the words before markup.** Every headline fits in two lines at every width (about 32
-   characters is safe). One supporting sentence under it, one primary action named for what it does.
+   characters is safe). One primary action named for what it does. A supporting sentence under the
+   headline only when the repo allows it and the headline alone cannot say what the thing is.
 5. **Build still, then measure, then look**: tokens, hero, sections (each a different composition),
    imagery, states. Then §5, then the screenshots.
 
@@ -117,7 +119,8 @@ node <skill>/scripts/inspect.mjs <url or path/to/index.html> [--app] [--allow ru
 - `--app` switches both to the app-screen rules (quiet borders, small labels and repeated panels
   allowed).
 - `--allow <id>` turns off one rule, for a pattern the repo deliberately keeps (for example
-  `--allow shadow` where the repo's KPI cards carry a shadow). Say which and why in the report. A
+  `--allow shadow` for lint and `--allow shadow,heavy-shadow` for `inspect --app`, where the repo's KPI
+  cards carry a shadow). Say which and why in the report. A
   single source line can carry the comment `ui-design-ignore` instead.
 
 Fix every FAIL. Treat each WARN as wrong unless you can defend it in one sentence. Then **open every

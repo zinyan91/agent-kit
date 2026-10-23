@@ -43,8 +43,9 @@ decides what is biggest (the largest block and the largest figure answer it), wh
 what is left out (a few numbers can replace a chart).
 
 Then name the **one finding**: the fact in today's data that most needs attention ("the 23:28 deploy
-doubled the error rate"). Put it where it is read first, under the title or the headline figure, next
-to the action it drives.
+doubled the error rate"). Put it where it is read first: inside the headline block, on the headline
+figure's label, or on the action it drives. A line under the title only when the repo allows
+explanatory text.
 
 List the blocks as answers to the next questions, one line each. A block with no question goes.
 
@@ -133,8 +134,8 @@ primary action and covers nothing.
 - **Narrow blocks do not span the canvas.** A table of five columns or fewer runs to about 760px at
   1440 and pairs with the next block.
 - **The title.** One `h1` per screen, a noun ("Analytics", the object's name) at 18–32px, 600–700. A
-  greeting only on a personal home, never with an emoji. An optional 14–16px grey second line about the
-  data (the finding, the period, the scope), never about the interface.
+  greeting only on a personal home, never with an emoji. A 14–16px grey second line about the data (the
+  period, the scope) only when the repo allows explanatory text, and never about the interface.
 - **Right of the title**: real actions only, or a freshness stamp ("Updated 4:09 PM" with refresh).
   One filled primary per screen, usually near-black.
 - **Tabs and filters.** The date range at page level or on each card, never both. Underline tabs sit
