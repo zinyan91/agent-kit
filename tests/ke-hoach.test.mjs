@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
-import { lapKeHoach } from '../lib/ke-hoach.mjs';
+import { lapKeHoach, timJunctionMoCoi } from '../lib/ke-hoach.mjs';
 
 const KIT = path.join('D:', 'kit', 'skills');
 const congCu = { claude: { skills: path.join('C:', 'c') }, codex: { skills: path.join('C:', 'x') } };
@@ -53,4 +53,18 @@ test('công cụ không khai thư mục skills thì bỏ qua', () => {
     hienTrang: () => ({ loai: 'khong-co' }),
   });
   assert.deepEqual(kq.map((h) => h.congCu), ['claude']);
+});
+
+const moCoi = (hienTrang, lietKe) =>
+  timJunctionMoCoi({ thuMucSkillKit: KIT, skills: ['a'], congCu, lietKe, hienTrang });
+
+test('junction trỏ vào skill đã xoá khỏi kit là mồ côi', () => {
+  const kq = moCoi((dich) => ({ loai: 'junction', dichJunction: path.join(KIT, path.basename(dich)) }), () => ['cu', 'a']);
+  assert.deepEqual(kq.map((h) => [h.congCu, h.skill]), [['claude', 'cu'], ['codex', 'cu']]);
+  assert.equal(kq[0].dich, path.join('C:', 'c', 'cu'));
+});
+
+test('junction trỏ ra ngoài kit hoặc thư mục thật thì không phải mồ côi', () => {
+  const kq = moCoi((dich) => (path.basename(dich) === 'cu' ? { loai: 'junction', dichJunction: 'E:\khac\cu' } : { loai: 'thu-muc' }), () => ['cu', 'tu-tao']);
+  assert.deepEqual(kq, []);
 });

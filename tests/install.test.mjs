@@ -75,6 +75,19 @@ test('--kiem sạch sau khi cài', () => {
   assert.match(kq.stdout, /Sạch/);
 });
 
+test('junction của skill đã xoá bị gỡ, thư mục tự tạo thì giữ', () => {
+  const daXoa = trongNha('.claude', 'skills', 'da-xoa');
+  fs.symlinkSync(path.join(KIT, 'skills', 'da-xoa'), daXoa, 'junction');
+  fs.mkdirSync(trongNha('.claude', 'skills', 'tu-tao'));
+  assert.match(chay('--kiem').stderr, /da-xoa → claude: junction mồ côi/);
+  const kq = chay();
+  assert.equal(kq.status, 0, kq.stderr + kq.stdout);
+  assert.ok(!fs.existsSync(daXoa) && !fs.lstatSync(path.dirname(daXoa)).isSymbolicLink());
+  assert.throws(() => fs.lstatSync(daXoa));
+  assert.ok(fs.existsSync(trongNha('.claude', 'skills', 'tu-tao')));
+  fs.rmSync(trongNha('.claude', 'skills', 'tu-tao'), { recursive: true });
+});
+
 test('thư mục thật khác bản kit: báo xung đột, không đụng vào', () => {
   const dich = trongNha('.claude', 'skills', 'tin-dung');
   fs.unlinkSync(dich);

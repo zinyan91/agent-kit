@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { lapKeHoach, quyetDinhJunction } from './lib/ke-hoach.mjs';
+import { lapKeHoach, quyetDinhJunction, timJunctionMoCoi } from './lib/ke-hoach.mjs';
 import { layVungMoc, thayVungMoc } from './lib/moc.mjs';
 import { ghepLuat, demDong } from './plugin/hooks/lib/luat.mjs';
 import { moRong, hienTrang, taoJunction, goJunction, catVaoKhoLuu, nhaNguoiDung } from './lib/he-thong.mjs';
@@ -32,6 +32,14 @@ const junctions = [
     .map(([ten, c]) => ({ nhan: `luật → ${ten}`, nguon: THU_MUC_LUAT, dich: c.thuMucLuat, ...quyetDinhJunction(hienTrang(c.thuMucLuat, THU_MUC_LUAT), THU_MUC_LUAT) })),
 ];
 
+const moCoi = timJunctionMoCoi({
+  thuMucSkillKit: THU_MUC_SKILL,
+  skills,
+  congCu,
+  lietKe: (thuMuc) => (fs.existsSync(thuMuc) ? fs.readdirSync(thuMuc) : []),
+  hienTrang,
+}).map((m) => ({ ...m, nhan: `skill ${m.skill} → ${m.congCu}` }));
+
 const git = (...a) => {
   try {
     return execFileSync('git', a, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
@@ -46,6 +54,7 @@ const bao = (dong) => console.log(dong);
 
 function kiem() {
   for (const j of junctions) if (j.loai !== 'giu') loi.push(`${j.nhan}: ${j.loai === 'tao' ? 'chưa nối' : j.lyDo ?? j.loai} (${j.dich})`);
+  for (const m of moCoi) loi.push(`${m.nhan}: junction mồ côi, skill đã xoá khỏi kit (${m.dich})`);
   for (const [ten, c] of Object.entries(congCu)) {
     if (!c.tepLuat) continue;
     const hien = fs.existsSync(c.tepLuat) ? layVungMoc(fs.readFileSync(c.tepLuat, 'utf8')) : null;
@@ -72,6 +81,10 @@ function cai() {
       continue;
     }
     bao(`${j.loai === 'giu' ? '=' : '+'} ${j.nhan}`);
+  }
+  for (const m of moCoi) {
+    goJunction(m.dich);
+    bao(`- ${m.nhan} (đã xoá khỏi kit)`);
   }
   for (const [ten, c] of Object.entries(congCu)) {
     if (!c.tepLuat) continue;
