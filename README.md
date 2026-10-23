@@ -34,7 +34,7 @@ do nó tạo: gặp xung đột thì dừng và báo. Bản cũ nó thay thế �
 ## Thêm skill
 
 Tạo `skills/<tên>/SKILL.md` (frontmatter `name` trùng tên thư mục, dạng kebab-case), rồi `node install.mjs`.
-Chỉ muốn vào vài công cụ: khai trong `kit.json` → `chiVao`. Skill bên thứ ba: đọc hết trước, ghi vào `NGUON.md`.
+Chỉ muốn vào vài công cụ: khai trong `kit.json` → `chiVao`. Dựa trên skill bên thứ ba: đọc hết bản gốc, viết lại cho kit, ghi nguồn vào `NGUON.md`.
 
 ## Sửa luật
 
