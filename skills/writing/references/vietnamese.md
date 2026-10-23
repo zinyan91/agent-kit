@@ -1,8 +1,8 @@
 # Dấu hiệu AI trong văn tiếng Việt
 
-Bổ sung cho `SKILL.md`, không thay nó. Các mẫu cấu trúc ở đó (§1 "không phải X mà là Y", §2 câu chốt một dòng, §6 bộ ba, §8 gạch ngang, §19 nhãn in đậm) vẫn là dấu hiệu mạnh nhất trong tiếng Việt. Tệp này ghi những dạng riêng của tiếng Việt, phần lớn sinh ra vì mô hình nghĩ bằng tiếng Anh rồi dịch.
+Bổ sung cho `../SKILL.md`, không thay nó. Các mẫu cấu trúc ở đó (§1 "không phải X mà là Y", §2 câu chốt một dòng, §6 bộ ba, §8 gạch ngang, §19 nhãn in đậm) vẫn là dấu hiệu mạnh nhất trong tiếng Việt. Tệp này ghi những dạng riêng của tiếng Việt, phần lớn sinh ra vì mô hình nghĩ bằng tiếng Anh rồi dịch.
 
-Cách dùng giống `SKILL.md`: đánh dấu, viết lại, đọc to, soát lại những mẫu hay sót. Không thêm dữ kiện.
+Cách dùng giống `../SKILL.md`: đánh dấu, viết lại, đọc to, soát lại những mẫu hay sót. Không thêm dữ kiện.
 
 ## A. Dựng sân khấu thay vì nói thẳng
 
