@@ -11,3 +11,4 @@ description: Cách làm việc với người dùng — phản biện, đo trư�
 - **Không báo "xong" khi chưa có bằng chứng.** Test xanh chỉ chứng minh điều test kiểm; push thành công không chứng minh đã deploy. Cái gì chưa kiểm được thì nói thẳng là chưa kiểm.
 - Việc mơ hồ: nói rõ mình sắp làm gì trước khi làm.
 - Tài liệu và mã lệch nhau: tin mã, rồi sửa tài liệu.
+- Văn xuôi người khác sẽ đọc (tài liệu, README, commit, mô tả PR, nội dung trên giao diện, văn bản cho người dùng): soát theo skill `humanizer` trước khi giao; tiếng Việt thì kèm `tieng-viet.md` của nó. Không thêm dữ kiện khi viết lại.
