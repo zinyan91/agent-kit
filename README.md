@@ -28,7 +28,7 @@ plugin Claude (nếu máy có lệnh `claude`). Không muốn nhóm skill riêng
 npx -y github:zinyan91/agent-kit --chi-chung
 ```
 
-Lựa chọn nhóm được nhớ trong `%USERPROFILE%\.agent-kit-may.json` : tự cập nhật và các lần chạy lại lệnh
+Lựa chọn nhóm được nhớ trong `%USERPROFILE%\.agent-kit-may.json`: tự cập nhật và các lần chạy lại lệnh
 `npx` không cờ đều giữ nó. Muốn cài lại cả hai nhóm thì thêm `--ca-hai`. Máy chỉ dùng Codex hay Antigravity (không mở Claude) thì chạy lại lệnh `npx` để lấy bản mới. Lần tự cập nhật nào
 lỗi thì phiên Claude sau sẽ báo kèm nguyên văn lỗi; kit không tự reset bản clone.
 
