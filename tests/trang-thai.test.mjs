@@ -9,7 +9,7 @@ let tt;
 before(async () => {
   nha = fs.mkdtempSync(path.join(os.tmpdir(), 'agent-kit-tt-'));
   process.env.AGENT_KIT_NHA = nha;
-  tt = await import('../lib/trang-thai.mjs');
+  tt = await import('../plugin/hooks/lib/trang-thai.mjs');
 });
 after(() => fs.rmSync(nha, { recursive: true, force: true }));
 

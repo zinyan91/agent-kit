@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { nhaNguoiDung } from './he-thong.mjs';
+import os from 'node:os';
+
+const nhaNguoiDung = () => process.env.AGENT_KIT_NHA || os.homedir();
 
 const MAC_DINH = { chiChung: false, lanKiemCuoi: null, ketQuaCuoi: null };
 

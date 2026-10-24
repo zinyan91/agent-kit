@@ -8,7 +8,7 @@ import { layVungMoc, thayVungMoc } from './lib/moc.mjs';
 import { ghepLuat, demDong, docLuatChoMay } from './plugin/hooks/lib/luat.mjs';
 import { trangThuMucLuat, giongThuMucLuat, ghiThuMucLuat, xoaThuMucLuat } from './lib/thu-muc-luat.mjs';
 import { nhanVai, quyetDinhNhaKit } from './lib/vai.mjs';
-import { ghiTrangThai } from './lib/trang-thai.mjs';
+import { ghiTrangThai } from './plugin/hooks/lib/trang-thai.mjs';
 import { moRong, hienTrang, taoJunction, goJunction, catVaoKhoLuu, nhaNguoiDung, tenMay } from './lib/he-thong.mjs';
 
 const KIT = path.dirname(fileURLToPath(import.meta.url));
