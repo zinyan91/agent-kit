@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
-import { lapKeHoach, timJunctionMoCoi } from '../lib/ke-hoach.mjs';
+import { lapKeHoach, timJunctionMoCoi, quyetDinhThuMucLuat, chonSkill } from '../lib/ke-hoach.mjs';
 
 const KIT = path.join('D:', 'kit', 'skills');
 const congCu = { claude: { skills: path.join('C:', 'c') }, codex: { skills: path.join('C:', 'x') } };
@@ -67,4 +67,18 @@ test('junction trỏ vào skill đã xoá khỏi kit là mồ côi', () => {
 test('junction trỏ ra ngoài kit hoặc thư mục thật thì không phải mồ côi', () => {
   const kq = moCoi((dich) => (path.basename(dich) === 'cu' ? { loai: 'junction', dichJunction: 'E:\khac\cu' } : { loai: 'thu-muc' }), () => ['cu', 'tu-tao']);
   assert.deepEqual(kq, []);
+});
+
+test('thư mục luật Antigravity: tạo, ghi đè khi có đánh dấu, xung đột khi không', () => {
+  assert.equal(quyetDinhThuMucLuat({ loai: 'khong-co' }).loai, 'tao');
+  assert.equal(quyetDinhThuMucLuat({ loai: 'thu-muc', coDanhDau: true }).loai, 'ghi-de');
+  assert.equal(quyetDinhThuMucLuat({ loai: 'thu-muc', coDanhDau: false }).loai, 'xung-dot');
+  assert.equal(quyetDinhThuMucLuat({ loai: 'junction', laCuaKit: true }).loai, 'thay-junction');
+  assert.equal(quyetDinhThuMucLuat({ loai: 'junction', laCuaKit: false }).loai, 'xung-dot');
+  assert.equal(quyetDinhThuMucLuat({ loai: 'tep' }).loai, 'xung-dot');
+});
+
+test('chọn skill theo nhóm', () => {
+  assert.deepEqual(chonSkill(['a', 'fp', 'tin-dung'], ['tin-dung', 'fp'], true), ['a']);
+  assert.deepEqual(chonSkill(['a', 'fp', 'tin-dung'], ['tin-dung', 'fp'], false), ['a', 'fp', 'tin-dung']);
 });

@@ -23,5 +23,9 @@
   "goBo": [
     "~/.claude/commands/fp.md",
     "~/.codex/prompts/fp.md"
+  ],
+  "nhomRieng": [
+    "tin-dung",
+    "fp"
   ]
 }

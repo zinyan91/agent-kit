@@ -3,14 +3,16 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { lapKeHoach, quyetDinhJunction, timJunctionMoCoi } from './lib/ke-hoach.mjs';
+import { lapKeHoach, timJunctionMoCoi, quyetDinhThuMucLuat, chonSkill } from './lib/ke-hoach.mjs';
 import { layVungMoc, thayVungMoc } from './lib/moc.mjs';
-import { ghepLuat, demDong } from './plugin/hooks/lib/luat.mjs';
-import { moRong, hienTrang, taoJunction, goJunction, catVaoKhoLuu, nhaNguoiDung } from './lib/he-thong.mjs';
+import { ghepLuat, demDong, docLuatChoMay } from './plugin/hooks/lib/luat.mjs';
+import { trangThuMucLuat, giongThuMucLuat, ghiThuMucLuat, xoaThuMucLuat } from './lib/thu-muc-luat.mjs';
+import { moRong, hienTrang, taoJunction, goJunction, catVaoKhoLuu, nhaNguoiDung, tenMay } from './lib/he-thong.mjs';
 
 const KIT = path.dirname(fileURLToPath(import.meta.url));
 const NGAN_SACH_LUAT = 200;
 const cheDo = process.argv.includes('--kiem') ? 'kiem' : process.argv.includes('--go') ? 'go' : 'cai';
+const chiChung = process.argv.includes('--chi-chung');
 const cauHinh = JSON.parse(fs.readFileSync(path.join(KIT, 'kit.json'), 'utf8'));
 const THU_MUC_SKILL = path.join(KIT, 'skills');
 const THU_MUC_LUAT = path.join(KIT, 'rules');
@@ -20,17 +22,19 @@ const khoLuu = path.join(process.env.AGENT_KIT_KHO_LUU || path.join(os.tmpdir(),
 const congCu = Object.fromEntries(
   Object.entries(cauHinh.congCu).map(([ten, c]) => [ten, Object.fromEntries(Object.entries(c).map(([k, v]) => [k, moRong(v)]))]),
 );
-const skills = fs.readdirSync(THU_MUC_SKILL, { withFileTypes: true }).filter((m) => m.isDirectory()).map((m) => m.name).sort();
-const tepLuat = fs.readdirSync(THU_MUC_LUAT).filter((t) => t.endsWith('.md')).map((ten) => ({ ten, noiDung: fs.readFileSync(path.join(THU_MUC_LUAT, ten), 'utf8') }));
+const skillTrongKit = fs.readdirSync(THU_MUC_SKILL, { withFileTypes: true }).filter((m) => m.isDirectory()).map((m) => m.name).sort();
+const skills = chonSkill(skillTrongKit, cauHinh.nhomRieng ?? [], chiChung);
+const tepLuat = docLuatChoMay(THU_MUC_LUAT, tenMay());
 const noiDungLuatCodex =
   `# Luật chung (agent-kit)\n\nSinh tự động từ ${THU_MUC_LUAT} bởi install.mjs — đừng sửa tay trong vùng mốc; sửa ở kit rồi chạy lại.\n\n${ghepLuat(tepLuat)}`;
 
-const junctions = [
-  ...lapKeHoach({ thuMucSkillKit: THU_MUC_SKILL, skills, congCu, chiVao: cauHinh.chiVao ?? {}, hienTrang }).map((h) => ({ ...h, nhan: `skill ${h.skill} → ${h.congCu}` })),
-  ...Object.entries(congCu)
-    .filter(([, c]) => c.thuMucLuat)
-    .map(([ten, c]) => ({ nhan: `luật → ${ten}`, nguon: THU_MUC_LUAT, dich: c.thuMucLuat, ...quyetDinhJunction(hienTrang(c.thuMucLuat, THU_MUC_LUAT), THU_MUC_LUAT) })),
-];
+const junctions = lapKeHoach({ thuMucSkillKit: THU_MUC_SKILL, skills, congCu, chiVao: cauHinh.chiVao ?? {}, hienTrang }).map((h) => ({
+  ...h,
+  nhan: `skill ${h.skill} → ${h.congCu}`,
+}));
+const thuMucLuat = Object.entries(congCu)
+  .filter(([, c]) => c.thuMucLuat)
+  .map(([ten, c]) => ({ nhan: `luật → ${ten}`, dich: c.thuMucLuat, ...quyetDinhThuMucLuat(trangThuMucLuat(c.thuMucLuat, THU_MUC_LUAT)) }));
 
 const moCoi = timJunctionMoCoi({
   thuMucSkillKit: THU_MUC_SKILL,
@@ -54,7 +58,12 @@ const bao = (dong) => console.log(dong);
 
 function kiem() {
   for (const j of junctions) if (j.loai !== 'giu') loi.push(`${j.nhan}: ${j.loai === 'tao' ? 'chưa nối' : j.lyDo ?? j.loai} (${j.dich})`);
-  for (const m of moCoi) loi.push(`${m.nhan}: junction mồ côi, skill đã xoá khỏi kit (${m.dich})`);
+  for (const m of moCoi) loi.push(`${m.nhan}: junction mồ côi, không còn trong bộ cài (${m.dich})`);
+  for (const t of thuMucLuat) {
+    if (t.loai === 'xung-dot') loi.push(`${t.nhan}: ${t.lyDo} (${t.dich})`);
+    else if (t.loai !== 'ghi-de') loi.push(`${t.nhan}: chưa có thư mục luật do kit sinh (${t.dich})`);
+    else if (!giongThuMucLuat(t.dich, tepLuat)) loi.push(`${t.nhan}: thư mục luật đã cũ — chạy lại install.mjs (${t.dich})`);
+  }
   for (const [ten, c] of Object.entries(congCu)) {
     if (!c.tepLuat) continue;
     const hien = fs.existsSync(c.tepLuat) ? layVungMoc(fs.readFileSync(c.tepLuat, 'utf8')) : null;
@@ -84,7 +93,17 @@ function cai() {
   }
   for (const m of moCoi) {
     goJunction(m.dich);
-    bao(`- ${m.nhan} (đã xoá khỏi kit)`);
+    bao(`- ${m.nhan} (không còn trong bộ cài)`);
+  }
+  for (const t of thuMucLuat) {
+    if (t.loai === 'xung-dot') {
+      loi.push(`${t.nhan}: XUNG ĐỘT, không đụng vào — ${t.lyDo} (${t.dich})`);
+      continue;
+    }
+    if (t.loai === 'thay-junction') goJunction(t.dich);
+    const moi = t.loai !== 'ghi-de' || !giongThuMucLuat(t.dich, tepLuat);
+    if (moi) ghiThuMucLuat(t.dich, tepLuat);
+    bao(`${moi ? '+' : '='} ${t.nhan}`);
   }
   for (const [ten, c] of Object.entries(congCu)) {
     if (!c.tepLuat) continue;
@@ -112,6 +131,10 @@ function go() {
   for (const j of junctions) if (j.loai === 'giu') {
     goJunction(j.dich);
     bao(`- ${j.nhan}`);
+  }
+  for (const t of thuMucLuat) if (t.loai === 'ghi-de') {
+    xoaThuMucLuat(t.dich);
+    bao(`- ${t.nhan}`);
   }
   for (const [ten, c] of Object.entries(congCu)) {
     if (!c.tepLuat || !fs.existsSync(c.tepLuat)) continue;

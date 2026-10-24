@@ -1,25 +1,22 @@
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
-import { ghepLuat } from './lib/luat.mjs';
+import { ghepLuat, docLuatChoMay } from './lib/luat.mjs';
 
-const thuMucKit = process.env.AGENT_KIT_DIR || 'D:\\agent-kit';
+const thuMucKit = process.env.AGENT_KIT_DIR || path.join(process.env.AGENT_KIT_NHA || os.homedir(), '.agent-kit');
 const thuMucLuat = path.join(thuMucKit, 'rules');
+const tenMay = (process.env.AGENT_KIT_TEN_MAY || os.hostname()).toUpperCase();
 
 if (!fs.existsSync(thuMucLuat)) {
   process.stdout.write(
     `[agent-kit] Không tìm thấy ${thuMucLuat} — luật chung KHÔNG được nạp. ` +
-      'Clone lại repo agent-kit vào đó hoặc đặt biến AGENT_KIT_DIR.\n',
+      'Chạy `npx -y github:zinyan91/agent-kit` (máy dùng) hoặc `node <kit>/install.mjs` (máy nguồn).\n',
   );
   process.exit(0);
 }
 
-const tep = fs
-  .readdirSync(thuMucLuat)
-  .filter((ten) => ten.endsWith('.md'))
-  .map((ten) => ({ ten, noiDung: fs.readFileSync(path.join(thuMucLuat, ten), 'utf8') }));
-
 process.stdout.write(
-  `# Luật chung (agent-kit — nguồn: ${thuMucLuat})\n\n` +
+  `# Luật chung (agent-kit — nguồn: ${thuMucLuat}, máy ${tenMay})\n\n` +
     'Áp dụng cho mọi repo. Luật riêng của repo (CLAUDE.md / AGENTS.md) bổ sung, và thắng khi mâu thuẫn.\n\n' +
-    `${ghepLuat(tep)}\n`,
+    `${ghepLuat(docLuatChoMay(thuMucLuat, tenMay))}\n`,
 );
