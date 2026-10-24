@@ -7,6 +7,8 @@ import { lapKeHoach, timJunctionMoCoi, quyetDinhThuMucLuat, chonSkill } from './
 import { layVungMoc, thayVungMoc } from './lib/moc.mjs';
 import { ghepLuat, demDong, docLuatChoMay } from './plugin/hooks/lib/luat.mjs';
 import { trangThuMucLuat, giongThuMucLuat, ghiThuMucLuat, xoaThuMucLuat } from './lib/thu-muc-luat.mjs';
+import { nhanVai, quyetDinhNhaKit } from './lib/vai.mjs';
+import { ghiTrangThai } from './lib/trang-thai.mjs';
 import { moRong, hienTrang, taoJunction, goJunction, catVaoKhoLuu, nhaNguoiDung, tenMay } from './lib/he-thong.mjs';
 
 const KIT = path.dirname(fileURLToPath(import.meta.url));
@@ -18,6 +20,10 @@ const THU_MUC_SKILL = path.join(KIT, 'skills');
 const THU_MUC_LUAT = path.join(KIT, 'rules');
 const HOOKS_PATH = path.join(KIT, 'git-hooks').replaceAll('\\', '/');
 const khoLuu = path.join(process.env.AGENT_KIT_KHO_LUU || path.join(os.tmpdir(), 'agent-kit-luu'), new Date().toISOString().replace(/[:.]/g, '-'));
+
+const NHA_KIT = path.join(nhaNguoiDung(), '.agent-kit');
+const vai = nhanVai(KIT, NHA_KIT);
+const nhaKit = vai === 'nguon' ? quyetDinhNhaKit(hienTrang(NHA_KIT, KIT), KIT) : { loai: 'giu' };
 
 const congCu = Object.fromEntries(
   Object.entries(cauHinh.congCu).map(([ten, c]) => [ten, Object.fromEntries(Object.entries(c).map(([k, v]) => [k, moRong(v)]))]),
@@ -56,6 +62,24 @@ const hooksPathHienTai = () => git('config', '--global', '--get', 'core.hooksPat
 const loi = [];
 const bao = (dong) => console.log(dong);
 
+const pluginDaBat = () => {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(nhaNguoiDung(), '.claude', 'settings.json'), 'utf8')).enabledPlugins?.['agent-kit@agent-kit'] === true;
+  } catch {
+    return false;
+  }
+};
+const LENH_PLUGIN = [['plugin', 'marketplace', 'add', KIT], ['plugin', 'install', 'agent-kit@agent-kit']];
+const chayClaude = (doiSo) => execFileSync('claude', doiSo.map((a) => (/\s/.test(a) ? `"${a}"` : a)), { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], shell: process.platform === 'win32' });
+const coClaude = () => {
+  try {
+    chayClaude(['--version']);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 function kiem() {
   for (const j of junctions) if (j.loai !== 'giu') loi.push(`${j.nhan}: ${j.loai === 'tao' ? 'chưa nối' : j.lyDo ?? j.loai} (${j.dich})`);
   for (const m of moCoi) loi.push(`${m.nhan}: junction mồ côi, không còn trong bộ cài (${m.dich})`);
@@ -73,13 +97,16 @@ function kiem() {
   for (const p of cauHinh.goBo ?? []) if (fs.existsSync(moRong(p))) loi.push(`còn tệp cũ cần gỡ: ${moRong(p)}`);
   const tong = tepLuat.reduce((s, t) => s + demDong(t.noiDung), 0);
   if (tong > NGAN_SACH_LUAT) loi.push(`luật chung ${tong} dòng, vượt ngân sách ${NGAN_SACH_LUAT}`);
-  const caiDat = path.join(nhaNguoiDung(), '.claude', 'settings.json');
-  const daBat = fs.existsSync(caiDat) && JSON.parse(fs.readFileSync(caiDat, 'utf8')).enabledPlugins?.['agent-kit@agent-kit'] === true;
-  if (!daBat) loi.push('plugin Claude agent-kit chưa bật (claude plugin marketplace add D:\\agent-kit && claude plugin install agent-kit@agent-kit)');
+  if (!pluginDaBat()) loi.push(`plugin Claude agent-kit chưa bật (${LENH_PLUGIN.map((l) => `claude ${l.join(' ')}`).join(' && ')})`);
+  if (nhaKit.loai !== 'giu') loi.push(`~/.agent-kit: ${nhaKit.loai === 'tao' ? 'chưa nối' : nhaKit.lyDo} (${NHA_KIT})`);
   bao(`skill: ${skills.length} | junction: ${junctions.length} | luật: ${tong} dòng / ${NGAN_SACH_LUAT}`);
 }
 
 function cai() {
+  if (nhaKit.loai === 'tao') taoJunction(KIT, NHA_KIT);
+  if (nhaKit.loai === 'xung-dot') loi.push(`~/.agent-kit: XUNG ĐỘT, không đụng vào — ${nhaKit.lyDo} (${NHA_KIT})`);
+  else bao(`${nhaKit.loai === 'tao' ? '+' : '='} ~/.agent-kit (${vai === 'nguon' ? 'máy nguồn' : 'máy dùng'})`);
+  ghiTrangThai({ chiChung });
   for (const j of junctions) {
     if (j.loai === 'tao') taoJunction(j.nguon, j.dich);
     else if (j.loai === 'thay-bang-junction') {
@@ -124,6 +151,13 @@ function cai() {
   for (const p of cauHinh.goBo ?? []) {
     const that = moRong(p);
     if (fs.existsSync(that)) bao(`- gỡ ${that} → ${catVaoKhoLuu(that, khoLuu)}`);
+  }
+  if (pluginDaBat()) bao('= plugin Claude agent-kit');
+  else if (process.env.AGENT_KIT_BO_PLUGIN) bao('  bỏ qua bước plugin Claude (AGENT_KIT_BO_PLUGIN)');
+  else if (!coClaude()) loi.push(`không thấy lệnh claude; cài Claude Code rồi chạy: ${LENH_PLUGIN.map((l) => `claude ${l.join(' ')}`).join(' && ')}`);
+  else {
+    for (const l of LENH_PLUGIN) chayClaude(l);
+    bao('+ plugin Claude agent-kit');
   }
 }
 

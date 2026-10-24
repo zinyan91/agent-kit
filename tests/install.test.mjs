@@ -46,6 +46,13 @@ test('cài lần đầu: nối skill, luật, hook, gỡ lệnh cũ', () => {
   assert.match(fs.readFileSync(gitCauHinh, 'utf8'), /hooksPath = .*git-hooks/);
 });
 
+test('máy nguồn: ~/.agent-kit là junction về kit, trạng thái máy được ghi', () => {
+  const nhaKit = trongNha('.agent-kit');
+  assert.ok(laJunction(nhaKit));
+  assert.equal(path.resolve(fs.readlinkSync(nhaKit)).toLowerCase(), path.resolve(KIT).toLowerCase());
+  assert.equal(JSON.parse(fs.readFileSync(trongNha('.agent-kit-may.json'), 'utf8')).chiChung, false);
+});
+
 test('skill chỉ dành cho Codex không vào Claude và Antigravity', () => {
   assert.ok(!fs.existsSync(trongNha('.claude', 'skills', 'nha-anh-chatgpt')));
   assert.ok(!fs.existsSync(trongNha('.gemini', 'config', 'skills', 'codex-with-chatgpt')));
@@ -133,6 +140,19 @@ test('thư mục thật khác bản kit: báo xung đột, không đụng vào',
   assert.equal(fs.readFileSync(path.join(dich, 'SKILL.md'), 'utf8'), 'ban khac');
   assert.notEqual(chay('--kiem').status, 0);
   fs.rmSync(dich, { recursive: true });
+});
+
+test('~/.agent-kit đã là thư mục thật: xung đột, không xoá', () => {
+  const nhaKit = trongNha('.agent-kit');
+  fs.unlinkSync(nhaKit);
+  fs.mkdirSync(nhaKit);
+  fs.writeFileSync(path.join(nhaKit, 'giu.txt'), 'x');
+  const kq = chay();
+  assert.notEqual(kq.status, 0);
+  assert.match(kq.stderr, /~\/\.agent-kit: XUNG ĐỘT/);
+  assert.ok(fs.existsSync(path.join(nhaKit, 'giu.txt')));
+  fs.rmSync(nhaKit, { recursive: true });
+  assert.equal(chay().status, 0);
 });
 
 test('hooksPath đang trỏ chỗ khác: không ghi đè', () => {
