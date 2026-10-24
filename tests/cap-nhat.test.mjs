@@ -22,6 +22,10 @@ test('chưa kiểm lần nào hoặc đã quá chu kỳ thì chạy; trong chu k
   assert.equal(quyetDinhCapNhat({ laJunction: false, trangThai: tt({ lanKiemCuoi: '2026-10-24T07:00:00Z' }), bayGio: BAY_GIO, chuKyMs: SAU_GIO }).chay, false);
 });
 
+test('trạng thái ghi vai máy nguồn: không chạy dù ~/.agent-kit là bản clone thật', () => {
+  assert.equal(quyetDinhCapNhat({ laJunction: false, trangThai: tt({ vai: 'nguon' }), bayGio: BAY_GIO, chuKyMs: SAU_GIO }).chay, false);
+});
+
 test('lần trước lỗi: cảnh báo kèm nguyên thông điệp lỗi', () => {
   const { canhBao } = quyetDinhCapNhat({ laJunction: false, trangThai: tt({ ketQuaCuoi: { luc: '2026-10-24T05:00:00Z', ok: false, loi: 'fatal: Not possible to fast-forward' } }), bayGio: BAY_GIO, chuKyMs: SAU_GIO });
   assert.match(canhBao, /fatal: Not possible to fast-forward/);
@@ -37,7 +41,8 @@ function mayDung(ten, trangThai) {
   const nha = path.join(goc, ten);
   fs.mkdirSync(nha);
   git(goc, 'clone', '-q', origin, path.join(nha, '.agent-kit'));
-  fs.writeFileSync(path.join(nha, '.agent-kit-may.json'), JSON.stringify(trangThai));
+  const headDaCai = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: path.join(nha, '.agent-kit'), encoding: 'utf8' }).trim();
+  fs.writeFileSync(path.join(nha, '.agent-kit-may.json'), JSON.stringify({ headDaCai, ...trangThai }));
   return nha;
 }
 const commitOrigin = (tep, noiDung) => {
@@ -75,6 +80,19 @@ test('nền: không có commit mới thì không cài lại', () => {
   assert.equal(docTT(nha).ketQuaCuoi.ok, true);
 });
 
+test('nền: cài lại lỗi thì lần sau thử lại dù không có commit mới', () => {
+  const nha = mayDung('nha-5', { chiChung: false, headDaCai: null });
+  const installThat = path.join(nha, '.agent-kit', 'install.mjs');
+  const banGoc = fs.readFileSync(installThat, 'utf8');
+  fs.writeFileSync(installThat, 'process.exit(3);');
+  chayNen(nha);
+  assert.equal(docTT(nha).ketQuaCuoi.ok, false);
+  fs.writeFileSync(installThat, banGoc);
+  chayNen(nha);
+  assert.equal(docTT(nha).ketQuaCuoi.ok, true);
+  assert.ok(fs.existsSync(path.join(nha, 'da-chay.json')));
+});
+
 test('nền: bản clone bị sửa tay khiến pull lỗi thì ghi lỗi, không reset', () => {
   const nha = mayDung('nha-3', { chiChung: false });
   fs.writeFileSync(path.join(nha, '.agent-kit', 'a.txt'), 'sua tay');
@@ -82,7 +100,7 @@ test('nền: bản clone bị sửa tay khiến pull lỗi thì ghi lỗi, khôn
   chayNen(nha);
   const kq = docTT(nha).ketQuaCuoi;
   assert.equal(kq.ok, false);
-  assert.ok(kq.loi.length > 0);
+  assert.ok(kq.loi.length > 0 && kq.loi.length <= 600);
   assert.equal(fs.readFileSync(path.join(nha, '.agent-kit', 'a.txt'), 'utf8'), 'sua tay');
 });
 

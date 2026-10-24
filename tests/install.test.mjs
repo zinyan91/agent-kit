@@ -50,7 +50,9 @@ test('máy nguồn: ~/.agent-kit là junction về kit, trạng thái máy đư�
   const nhaKit = trongNha('.agent-kit');
   assert.ok(laJunction(nhaKit));
   assert.equal(path.resolve(fs.readlinkSync(nhaKit)).toLowerCase(), path.resolve(KIT).toLowerCase());
-  assert.equal(JSON.parse(fs.readFileSync(trongNha('.agent-kit-may.json'), 'utf8')).chiChung, false);
+  const tt = JSON.parse(fs.readFileSync(trongNha('.agent-kit-may.json'), 'utf8'));
+  assert.equal(tt.chiChung, false);
+  assert.equal(tt.vai, 'nguon');
 });
 
 test('skill chỉ dành cho Codex không vào Claude và Antigravity', () => {
@@ -103,7 +105,12 @@ test('--chi-chung gỡ nhóm riêng, chạy lại không cờ thì nối lại',
   assert.throws(() => fs.lstatSync(tinDung));
   assert.ok(laJunction(trongNha('.claude', 'skills', 'writing')));
   assert.equal(chay().status, 0);
+  assert.throws(() => fs.lstatSync(tinDung));
+  const kiem = chay('--kiem');
+  assert.equal(kiem.status, 0, kiem.stderr);
+  assert.equal(chay('--ca-hai').status, 0);
   assert.ok(laJunction(tinDung));
+  assert.equal(JSON.parse(fs.readFileSync(trongNha('.agent-kit-may.json'), 'utf8')).chiChung, false);
 });
 
 test('junction luật kiểu cũ trỏ về rules/ của kit được thay bằng thư mục thật', () => {

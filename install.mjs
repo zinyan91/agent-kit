@@ -8,13 +8,13 @@ import { layVungMoc, thayVungMoc } from './lib/moc.mjs';
 import { ghepLuat, demDong, docLuatChoMay } from './plugin/hooks/lib/luat.mjs';
 import { trangThuMucLuat, giongThuMucLuat, ghiThuMucLuat, xoaThuMucLuat } from './lib/thu-muc-luat.mjs';
 import { nhanVai, quyetDinhNhaKit } from './lib/vai.mjs';
-import { ghiTrangThai } from './plugin/hooks/lib/trang-thai.mjs';
+import { docTrangThai, ghiTrangThai } from './plugin/hooks/lib/trang-thai.mjs';
 import { moRong, hienTrang, taoJunction, goJunction, catVaoKhoLuu, nhaNguoiDung, tenMay } from './lib/he-thong.mjs';
 
 const KIT = path.dirname(fileURLToPath(import.meta.url));
 const NGAN_SACH_LUAT = 200;
 const cheDo = process.argv.includes('--kiem') ? 'kiem' : process.argv.includes('--go') ? 'go' : 'cai';
-const chiChung = process.argv.includes('--chi-chung');
+const chiChung = process.argv.includes('--chi-chung') ? true : process.argv.includes('--ca-hai') ? false : docTrangThai().chiChung;
 const cauHinh = JSON.parse(fs.readFileSync(path.join(KIT, 'kit.json'), 'utf8'));
 const THU_MUC_SKILL = path.join(KIT, 'skills');
 const THU_MUC_LUAT = path.join(KIT, 'rules');
@@ -106,7 +106,7 @@ function cai() {
   if (nhaKit.loai === 'tao') taoJunction(KIT, NHA_KIT);
   if (nhaKit.loai === 'xung-dot') loi.push(`~/.agent-kit: XUNG ĐỘT, không đụng vào — ${nhaKit.lyDo} (${NHA_KIT})`);
   else bao(`${nhaKit.loai === 'tao' ? '+' : '='} ~/.agent-kit (${vai === 'nguon' ? 'máy nguồn' : 'máy dùng'})`);
-  ghiTrangThai({ chiChung });
+  ghiTrangThai({ chiChung, vai });
   for (const j of junctions) {
     if (j.loai === 'tao') taoJunction(j.nguon, j.dich);
     else if (j.loai === 'thay-bang-junction') {
@@ -156,8 +156,12 @@ function cai() {
   else if (process.env.AGENT_KIT_BO_PLUGIN) bao('  bỏ qua bước plugin Claude (AGENT_KIT_BO_PLUGIN)');
   else if (!coClaude()) loi.push(`không thấy lệnh claude; cài Claude Code rồi chạy: ${LENH_PLUGIN.map((l) => `claude ${l.join(' ')}`).join(' && ')}`);
   else {
-    for (const l of LENH_PLUGIN) chayClaude(l);
-    bao('+ plugin Claude agent-kit');
+    try {
+      for (const l of LENH_PLUGIN) chayClaude(l);
+      bao('+ plugin Claude agent-kit');
+    } catch (e) {
+      loi.push(`cài plugin Claude lỗi: ${String(e.stderr || e.message).trim().split('\n').slice(-3).join(' | ')} — chạy tay: ${LENH_PLUGIN.map((l) => `claude ${l.join(' ')}`).join(' && ')}`);
+    }
   }
 }
 
@@ -188,4 +192,5 @@ if (loi.length) {
   console.error(`\n${loi.length} vấn đề:\n${loi.map((l) => `  ! ${l}`).join('\n')}`);
   process.exit(1);
 }
+if (cheDo === 'cai' && vai === 'dung') ghiTrangThai({ headDaCai: git('-C', KIT, 'rev-parse', 'HEAD') || null });
 bao(cheDo === 'kiem' ? '\nSạch.' : '\nXong.');

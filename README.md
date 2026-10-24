@@ -28,8 +28,8 @@ plugin Claude (nếu máy có lệnh `claude`). Không muốn nhóm skill riêng
 npx -y github:zinyan91/agent-kit --chi-chung
 ```
 
-Lựa chọn nhóm được nhớ trong `%USERPROFILE%\.agent-kit-may.json` và giữ nguyên khi tự cập nhật. Máy chỉ
-dùng Codex hay Antigravity (không mở Claude) thì chạy lại lệnh `npx` để lấy bản mới. Lần tự cập nhật nào
+Lựa chọn nhóm được nhớ trong `%USERPROFILE%\.agent-kit-may.json` : tự cập nhật và các lần chạy lại lệnh
+`npx` không cờ đều giữ nó. Muốn cài lại cả hai nhóm thì thêm `--ca-hai`. Máy chỉ dùng Codex hay Antigravity (không mở Claude) thì chạy lại lệnh `npx` để lấy bản mới. Lần tự cập nhật nào
 lỗi thì phiên Claude sau sẽ báo kèm nguyên văn lỗi; kit không tự reset bản clone.
 
 Script của skill `ui-design` cần thêm Node 22 và Chrome hoặc Edge; thiếu thì skill vẫn đọc được.
@@ -47,7 +47,7 @@ do nó tạo: gặp xung đột thì dừng và báo. Bản cũ nó thay thế �
 | Lệnh | Việc |
 |---|---|
 | `node install.mjs` | Nối mọi thứ: junction skill, luật cho Codex và Antigravity, git hook, `~/.agent-kit`, plugin Claude |
-| `node install.mjs --chi-chung` | Như trên, bỏ nhóm skill riêng |
+| `node install.mjs --chi-chung` / `--ca-hai` | Như trên, bỏ hoặc lấy lại nhóm skill riêng; lựa chọn được nhớ cho các lần sau |
 | `node install.mjs --kiem` | Chỉ đọc; báo chỗ đứt, luật cũ, hook chưa đặt, plugin chưa bật, luật vượt 200 dòng |
 | `node install.mjs --go` | Gỡ mọi thứ kit đã tạo (giữ `~/.agent-kit`) |
 | `npm test` | Test toàn bộ, không đụng máy thật |
