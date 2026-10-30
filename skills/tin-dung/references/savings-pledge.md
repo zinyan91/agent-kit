@@ -1,6 +1,6 @@
 # Huy động & Cầm cố sổ tiết kiệm
 
-Đối chiếu ngày 27/10/2026 với CustomerManager nhánh `feat/huy-dong-cam-co`. Mã nguồn thắng tài liệu này khi lệch.
+Đối chiếu ngày 30/10/2026 với CustomerManager nhánh `main`. Mã nguồn thắng tài liệu này khi lệch.
 
 ## Phạm vi
 
@@ -13,7 +13,10 @@ Tab "Huy động & Cầm cố" (`/savings-pledge`, phân hệ `credit`) quản l
 - `PledgeLoanSavingsBooks`: nhiều–nhiều, cột `PrincipalCovered` là phần gốc vay sổ đó bảo đảm; tổng theo khoản vay = số tiền vay.
 - `PledgeLoanRepayments`: lịch sử trả. Dư nợ **không lưu**: = số tiền vay − Σ gốc đã trả; ngày tính lãi gần nhất = ngày trả gần nhất hoặc ngày giải ngân.
 - Ghi qua hàm `save_pledge_loan` và `record_pledge_repayment` (SECURITY INVOKER). Hàm chặn: ngày trả lùi so với lần trả gần nhất, cấn trừ sổ đã tất toán, sửa số tiền hoặc ngày giải ngân khi đã có lần trả, trả một phần ≤ 0 hoặc ≥ dư nợ, trả lần hai trên khoản đã tất toán.
+- Migration 76 GRANT tường minh cho bốn bảng và ba hàm, thu hồi `EXECUTE` của `PUBLIC`/`anon` trên hàm: từ 30/10/2026 Supabase không tự cấp quyền cho bảng mới trong `public` nữa (skill `postgres`).
 - Bản ghi HĐTD/KUNN/TSBĐ cũ đã chuyển mang `MovedToPledgeLoanId` / `MovedToSavingsBookId`; mọi API liệt kê lọc bỏ chúng.
+- API sổ và khoản vay đọc theo trang (`allPages` trong `src/lib/api/paging.ts`): PostgREST trả tối đa 1000 dòng mỗi lần và không báo bị cắt.
+- Form khoản vay: một sổ thì `PrincipalCovered` tự bằng số tiền vay và không hiện ô nhập; từ hai sổ mới hiện ô "Phần gốc vay bảo đảm" kèm dòng "Đã chia x / y", sổ thêm sau điền sẵn phần còn thiếu.
 
 ## Công thức (`src/lib/pledgeLoanMath.ts`, `pledgeLoan.ts`, `savingsBook.ts`)
 
@@ -28,7 +31,7 @@ Tab "Huy động & Cầm cố" (`/savings-pledge`, phân hệ `credit`) quản l
 
 ## Tổng hợp
 
-Dashboard (tổng dư nợ, hạn mức đã cấp, số KH có dư nợ, phương thức "Cầm cố sổ tiết kiệm", nhóm nợ, giá trị TSBĐ), báo cáo đến hạn và báo cáo danh mục cộng thêm khoản cầm cố qua `src/lib/pledgePortfolio.ts`. Bảng cảnh báo đến hạn của Dashboard **chưa** có khoản cầm cố.
+Dashboard (tổng dư nợ, hạn mức đã cấp, số KH có dư nợ, phương thức "Cầm cố sổ tiết kiệm", nhóm nợ, giá trị TSBĐ), báo cáo đến hạn và báo cáo danh mục cộng thêm khoản cầm cố qua `src/lib/pledgePortfolio.ts`. Bảng cảnh báo KUNN đến hạn (Dashboard và báo cáo cảnh báo, `src/lib/reports/alertData.ts`) gộp cả khoản cầm cố đang mở, đổi sang dạng KUNN bằng `pledgeLoanAsKunn`; bộ lọc "chỉ nhóm 1" dùng `pledgeLoanDebtGroup`.
 
 ## Chuyển dữ liệu cũ (migration 77)
 

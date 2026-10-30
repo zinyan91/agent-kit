@@ -29,7 +29,7 @@ SKILL.md giữ phần cốt lõi luôn cần. Chi tiết đầy đủ từng ngh
 | Phương án kinh doanh tính hạn mức, phân tích trả nợ trước hạn, TOI | `references/business-plan.md` |
 | Mã mục đích sử dụng vốn (cấp 5/cấp 6), quy ước FBE, dữ liệu chuẩn hóa, tìm kiếm | `references/loan-purpose-mdsdv.md` |
 | Hồ sơ khách hàng, phân quyền `OwnerId`, xóa KH/HĐTD, kiểm soát sau vay | `references/customer-and-post-loan.md` |
-| RLS, vai trò admin/banker, quy ước CSDL, `SECURITY INVOKER`/`DEFINER`, pg_cron | `references/security-database.md` |
+| RLS, ba vai trò master_admin/user_admin/user, `SystemConfig`, quy ước CSDL, `SECURITY INVOKER`/`DEFINER`, pg_cron | `references/security-database.md` |
 | Xuất `.docx`/`.xlsx`/`.pptx` thật, in qua iframe, đọc số thành chữ, xuất lịch kèm công thức | `references/export-documents.md` |
 | Lớp token Sáng/Tối, định dạng số/tiền, i18n, định tuyến, **backdrop-blur bị vô hiệu**, de-nesting, Logo | `references/ui-conventions.md` |
 | Kho hàng, bảng kê mua bán, hóa đơn bán lẻ (phân hệ phụ trợ, không phải lõi tín dụng) | `references/retail-inventory.md` |
@@ -113,7 +113,7 @@ supabase/migrations/  Script SQL migration chạy theo thứ tự
 
 ## 5. Mô hình bảo mật & RLS (tóm tắt — chi tiết `references/security-database.md`)
 
-- Bắt buộc đăng nhập, **không tự đăng ký**. Vai trò: `admin` (toàn quyền) / `banker` (chỉ KH mình phụ trách qua `Customers.OwnerId`). Quyền trên TSĐB/HĐTD/KUNN/thẻ/lịch trả nợ suy ra tự động theo quan hệ tới Khách hàng.
+- Bắt buộc đăng nhập, **không tự đăng ký**. Ba vai trò: `master_admin` (toàn quyền) / `user_admin` (xem-sửa mọi KH, gán/chuyển KH, xóa tệp kho; không phân quyền, không cấu hình HF, không xóa vĩnh viễn KH) / `user` (chỉ KH mình phụ trách qua `Customers.OwnerId`). Ma trận ở `src/lib/permissions.ts`. Admin xem dữ liệu theo từng tài khoản (mặc định chính mình), lọc ở server. Quyền trên TSĐB/HĐTD/KUNN/thẻ/lịch trả nợ suy ra tự động theo quan hệ tới Khách hàng.
 - RLS bật **100% bảng**. Khoá `anon` công khai trên client → RLS là lớp phòng thủ duy nhất. Bảng chưa dùng bật RLS **không kèm policy** (khoá mặc định).
 - **Sinh ID do CSDL** (sequence), không `max(Id)+1` phía client (client chỉ thấy phần dữ liệu của mình).
 - `service_role` key **tuyệt đối không** vào mã client.

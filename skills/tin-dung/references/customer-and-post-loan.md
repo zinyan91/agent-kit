@@ -17,24 +17,28 @@
 
 ## 1. Phân quyền theo `Customers.OwnerId`
 
-Mô hình quyền là **hai vai + quyền sở hữu dữ liệu**, cài ở tầng CSDL (RLS), không cài ở giao diện. Nguồn: `supabase/migrations/01_roles_and_ownership.sql`, `02_enable_rls.sql`, và các policy trong từng migration bảng.
+Mô hình quyền là **ba vai + quyền sở hữu dữ liệu**, cài ở tầng CSDL (RLS), không cài ở giao diện. Chi tiết ba vai: `references/security-database.md` §3. Nguồn: `supabase/migrations/01_roles_and_ownership.sql`, `02_enable_rls.sql`, và các policy trong từng migration bảng.
 
 | Thành phần | Vai trò |
 | :--- | :--- |
-| Bảng `UserRoles("UserId","Role")` | `Role` chỉ nhận `'admin'` hoặc `'banker'` (CHECK). admin = toàn quyền xem/sửa; banker = **chỉ KH mình phụ trách**. |
-| Cột `Customers.OwnerId uuid` | Banker phụ trách. **`NULL` = chỉ admin nhìn thấy** (không phải "mọi người thấy"). |
-| `is_admin()` | `SECURITY DEFINER`, kiểm `auth.uid()` có dòng admin trong `UserRoles`. |
+| Bảng `UserRoles("UserId","Role")` | `Role` chỉ nhận `'master_admin'`, `'user_admin'` hoặc `'user'` (CHECK, migration 60). Hai admin xem/sửa mọi KH; user = **chỉ KH mình phụ trách**. |
+| Cột `Customers.OwnerId uuid` | Người phụ trách. **`NULL` = chỉ admin nhìn thấy** (không phải "mọi người thấy"). Admin đổi được `OwnerId` (gán/chuyển KH); user thì không. |
+| `is_admin()` / `is_master_admin()` | `SECURITY DEFINER`; `is_admin()` = master hoặc user_admin, `is_master_admin()` chỉ master (xóa vĩnh viễn KH, ghi `UserRoles`). |
 | `can_access_customer(cid)` | `is_admin() OR Customers.OwnerId = auth.uid()`. |
 | `can_access_contract(id)` | Suy quyền qua `LoanContracts → Customers.OwnerId`. |
 | `can_access_collateral(id)` | Suy quyền qua `Collaterals → Customers.OwnerId` (migration 08). |
 
+**Phạm vi xem theo tài khoản (admin):** admin không xem gộp mọi KH. `UserScopeContext` đặt phạm vi (mặc định = tài khoản của chính mình; "Tất cả tài khoản" và "Chưa phân công" là lựa chọn chủ động, "Tất cả" không được nhớ), và `lib/api` lọc **ở server** theo `ownerScopeStore`: bảng `Customers` lọc `OwnerId`; bảng có nhúng khách hàng (`LoanContracts`, `CardContracts`) lọc `customer.OwnerId` với `!inner`; bảng chỉ có `CustomerId` (`Collaterals`, `CreditContracts`, `MortgageContracts`, `PostLoanControlRecords`) lọc theo danh sách mã KH trong phạm vi (chia lô 200). Đổi phạm vi thì `AppLayout` remount vùng nội dung để mọi màn nạp lại. Đếm KH theo tài khoản dùng RPC `get_user_customer_counts()`. Phạm vi là **tiện xem, không phải bảo mật** — bảo mật vẫn là RLS. Dữ liệu dùng chung (lãi suất, COF, ngân hàng câu hỏi, kho hàng mẫu, Kho lưu trữ) không theo phạm vi.
+
 **Vì sao chỉ một cột `OwnerId` trên `Customers`?** Quyền trên `Collaterals` / `LoanContracts` / `CreditCards` / `RepaymentSchedules` / `PostLoanControlRecords` được **suy ra theo quan hệ tới `Customers`**, không thêm cột chủ sở hữu cho từng bảng. Một nguồn sự thật về quyền, khỏi lệch.
+
+**Chuyển giao khách hàng (migration 66, `/admin/transfer`).** Vì quyền suy từ `Customers.OwnerId`, chuyển giao chỉ cần đổi `OwnerId`; HĐTD, KUNN, lịch trả nợ, TSĐB, thế chấp, thẻ, kiểm soát sau vay đi theo tự động. Văn bản Văn thư gắn khách (`Dispatches.CustomerId`) có `OwnerId` riêng nên được đổi theo, nhưng chỉ những văn bản đang thuộc người chuyển. Hàm `transfer_customers(from, to, ids)` (SECURITY DEFINER, kiểm `is_admin()` bên trong) chạy trọn trong một giao dịch, chỉ chuyển khách đang thuộc `from` dù danh sách có mã khách của người khác, và ghi `CustomerTransfers`. `customer_transfer_preview` đếm trước số hồ sơ. Khách `OwnerId = NULL` không chuyển được bằng hàm này. Dữ liệu cá nhân của người chuyển (kho hàng, mẫu bảng kê, kho tệp cá nhân) không nằm trong chuyển giao.
 
 **Vì sao hàm hỗ trợ là `SECURITY DEFINER`?** Để **tránh đệ quy RLS**: policy trên `Customers` mà lại `SELECT` chính `Customers` sẽ tự gọi lại policy. Hàm định nghĩa với quyền chủ sở hữu chạy ngoài vòng đó.
 
 **Vì sao bắt buộc có index `idx_customers_owner` và các index `*_customer`?** Không có chúng, mỗi truy vấn dưới RLS quét toàn bảng cho **từng dòng** — hiệu năng sụp khi bật RLS.
 
-> **Lỗi từng xảy ra / cạm bẫy:** khi bật RLS mà quên gán `OwnerId` cho dữ liệu cũ thì **banker không thấy gì** (dữ liệu không mất, chỉ bị ẩn). Migration 01 gán toàn bộ KH đang `NULL` về admin để tránh đúng cảnh này. Hệ quả kế thừa: dữ liệu nhập thẳng bằng SQL không đi qua ứng dụng nên có thể để `OwnerId = NULL` → chỉ admin thấy.
+> **Lỗi từng xảy ra / cạm bẫy:** khi bật RLS mà quên gán `OwnerId` cho dữ liệu cũ thì **user không thấy gì** (dữ liệu không mất, chỉ bị ẩn). Migration 01 gán toàn bộ KH đang `NULL` về admin để tránh đúng cảnh này. Hệ quả kế thừa: dữ liệu nhập thẳng bằng SQL không đi qua ứng dụng nên có thể để `OwnerId = NULL` → chỉ admin thấy.
 
 ---
 
@@ -94,7 +98,9 @@ Hàm chính:
 
 **`ArchivedAt` chuỗi rỗng đọc thành *chưa* lưu trữ** (xem điều kiện `trim().length > 0`), không phải đã lưu trữ — hồ sơ thà nằm lại danh sách làm việc còn hơn âm thầm biến mất.
 
-**Chốt chống trôi nằm ở `api.ts`, không ở tab Khách hàng.** `saveContractAPI` và `saveCreditContractAPI` tự **xoá `ArchivedAt`** khi ghi hợp đồng cho khách đang lưu trữ — áp cho **cả sửa lẫn tạo mới** (sửa một KUNN của khách đang lưu trữ cũng là đang làm việc với khách đó). Đặt ở lớp dữ liệu thì tab Khách hàng vẫn sạch mà cờ không mâu thuẫn được với thực tế. Dữ liệu nhập thẳng bằng SQL không đi qua đây; migration 32 có câu rà soát.
+**Vòng đời lưu trữ nằm ở lớp dữ liệu `src/lib/api/`.** `saveContractAPI`, `saveCreditContractAPI` và `saveCardContractAPI` chỉ xoá `ArchivedAt` khi **tạo mới chứng từ còn hoạt động**. Sửa chứng từ có sẵn, tất toán KUNN, đóng HĐTD/thẻ hoặc tạo chứng từ lịch sử đã đóng đều giữ nguyên trạng thái lưu trữ. Bỏ lưu trữ thủ công dùng `setCustomerArchivedAPI`; lỗi cập nhật phải được truyền ra giao diện. Nút Lưu trữ hồ sơ/Bỏ lưu trữ có ở danh sách và form hồ sơ; URL hồ sơ đã lưu trữ phải tra trên toàn danh sách trong phạm vi quyền, không chỉ bộ lọc Đang làm việc. Lưu trữ không xoá lịch sử và không chứng minh dư nợ bằng 0.
+
+**Cảnh báo sau tất toán:** `selectAlertRows` (nguồn chung Tổng quan và báo cáo Excel/PDF) chỉ báo hết hạn KUNN/HĐTD/định giá cho khoản `!IsSettled` có `outstandingOf(contract, paidPrincipalMap[id]) > 0`. Thu đủ gốc nhưng cờ tất toán chưa cập nhật vẫn ngừng nhắc hết hạn. Tài sản dùng chung còn bảo đảm khoản khác có dư nợ vẫn được nhắc; kỳ due chưa thu vẫn giữ để không mất nhắc lãi. `ArchivedAt` không dùng để che cảnh báo khoản còn nợ. Không thay công thức dư nợ hoặc xoá hồ sơ lịch sử.
 
 ---
 

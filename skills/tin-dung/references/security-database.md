@@ -6,7 +6,8 @@ Tài liệu này là nguồn sự thật cho mô hình bảo mật và quy ướ
 
 1. [Vì sao RLS là lớp phòng thủ duy nhất](#1-vì-sao-rls-là-lớp-phòng-thủ-duy-nhất)
 2. [Đăng nhập: bắt buộc, không tự đăng ký](#2-đăng-nhập-bắt-buộc-không-tự-đăng-ký)
-3. [Hai vai trò: admin và banker](#3-hai-vai-trò-admin-và-banker)
+3. [Ba vai trò: master_admin, user_admin, user](#3-ba-vai-trò-master_admin-user_admin-user)
+   - [3b. Cờ module theo tài khoản](#3b-cờ-module-theo-tài-khoản-migration-65)
 4. [RLS bật 100% bảng — kể cả bảng chưa dùng](#4-rls-bật-100-bảng--kể-cả-bảng-chưa-dùng)
 5. [Các hàm hỗ trợ RLS](#5-các-hàm-hỗ-trợ-rls)
 6. [Chính sách (policy) từng bảng](#6-chính-sách-policy-từng-bảng)
@@ -37,38 +38,57 @@ Chi tiết đăng nhập cần biết:
 
 | Điểm | Hành vi | Vì sao |
 | :--- | :--- | :--- |
-| Đăng nhập bằng username hoặc email | Nếu chuỗi nhập **không có `@`**, `signIn` tự ghép `${input.toLowerCase()}@app.local` | Cho phép banker gõ tên đăng nhập ngắn thay vì email đầy đủ; tài khoản nội bộ dùng domain quy ước `@app.local` |
+| Đăng nhập bằng username | `username-login` tra `UserRoles.Username` ở server, xác thực mật khẩu qua Supabase Auth rồi trả phiên; client dùng `auth.setSession`. Email cũ vẫn được hỗ trợ ở lớp auth | Migration `20261021071942_username_login` bổ sung username duy nhất, khởi tạo từ phần trước @; không đổi email, mật khẩu, UUID hoặc role. Quản trị tạo/sửa username qua `admin-users` |
 | Vai trò tra sau khi có phiên | Sau khi có `session`, một `useEffect` truy vấn `UserRoles` theo `UserId` để lấy `Role` + `FullName` | Vai trò không nằm trong JWT; nó là dữ liệu bảng nên phải đọc riêng |
-| `isAdmin` | Suy ra ở client: `role === 'admin'` | Chỉ để bật/tắt UI. **Không phải** ranh giới bảo mật — ranh giới thật là `is_admin()` trong CSDL |
-| Thông báo lỗi | `Invalid login credentials` → "Tên đăng nhập / Email hoặc mật khẩu không chính xác."; `Email not confirmed` → yêu cầu liên hệ quản trị | Không tiết lộ tài khoản có tồn tại hay không |
+| `can(capability)` | Suy ra ở client từ ma trận trong `src/lib/permissions.ts` (`isMasterAdmin`, `isUserAdmin`, `isAdmin` chỉ là cờ tiện dùng) | Chỉ để bật/tắt UI. **Không phải** ranh giới bảo mật — ranh giới thật là `is_admin()` / `is_master_admin()` trong CSDL |
+| `roleLoading` | `true` khi đã có phiên nhưng chưa tra xong `UserRoles` | `UserScopeProvider` chờ cờ này để admin không lỡ tải dữ liệu chưa lọc |
+| Thông báo lỗi | Username không tồn tại hoặc mật khẩu sai trả cùng thông điệp, không công khai email; giới hạn 10 lượt/tên/5 phút và 200 lượt toàn hệ thống/5 phút | Limiter trong schema `app_auth`, RPC chỉ service_role gọi được; endpoint username không yêu cầu JWT vì dùng trước đăng nhập, endpoint admin-users vẫn xác minh JWT và role |
 
-Quan trọng: `isAdmin` phía client **chỉ để trình bày**. Một banker sửa biến này trong trình duyệt vẫn không vượt được RLS, vì mọi quyết định quyền thật nằm ở `is_admin()` chạy trong CSDL.
+Quan trọng: `can()` / `isAdmin` phía client **chỉ để trình bày**. Một user sửa biến này trong trình duyệt vẫn không vượt được RLS, vì mọi quyết định quyền thật nằm ở `is_admin()` và `is_master_admin()` chạy trong CSDL. Khi đổi ma trận quyền phải đổi **cả hai nơi**: `permissions.ts` và migration RLS.
 
-## 3. Hai vai trò: admin và banker
+## 3. Ba vai trò: master_admin, user_admin, user
 
-Kiểu `AppRole = 'admin' | 'banker'` (định nghĩa ở `AuthContext.tsx`, ràng buộc `CHECK` ở bảng `UserRoles`).
+Kiểu `AppRole = 'master_admin' | 'user_admin' | 'user'` (định nghĩa ở `src/lib/permissions.ts`, ràng buộc `CHECK` ở bảng `UserRoles`). Từ migration 60 hai giá trị cũ đã bị bỏ: `admin` thành `master_admin`, `banker` thành `user`; client không còn nhận giá trị cũ.
+
+> **Trạng thái triển khai (2026-10-06):** migration 59 và 60 đã áp lên DB thật; vai trò cũ đã chuyển (`admin` thành `master_admin`, `banker` thành `user`). Client coi giá trị vai trò cũ là không hợp lệ nên migration luôn phải áp **trước** khi deploy mã.
 
 | Vai trò | Phạm vi |
 | :--- | :--- |
-| **admin** | Toàn quyền xem/sửa mọi khách hàng và dữ liệu suy ra |
-| **banker** | Chỉ khách hàng **mình phụ trách**, xác định qua `Customers.OwnerId = auth.uid()` |
+| **master_admin** | Toàn quyền: xem/sửa KH mọi tài khoản, gán/chuyển KH, xóa vĩnh viễn KH, đổi vai trò, cấu hình kho lưu trữ (repo Google Drive), xóa tệp kho |
+| **user_admin** | Xem/sửa KH mọi tài khoản, gán/chuyển KH, upload và xóa tệp kho. **Không** đổi vai trò, **không** cấu hình HF, **không** xóa vĩnh viễn KH |
+| **user** | Chỉ khách hàng **mình phụ trách**, xác định qua `Customers.OwnerId = auth.uid()`; upload/tải tệp kho, không xóa tệp |
+
+Ma trận chi tiết: `src/lib/permissions.ts` (`can(role, capability)`).
 
 Nguyên tắc phân quyền (`01_roles_and_ownership.sql`):
 
 - Quyền sở hữu **chỉ gắn ở bảng `Customers`** qua cột `OwnerId uuid REFERENCES auth.users(id)`.
-- `OwnerId = NULL` nghĩa là **chỉ admin** nhìn thấy khách hàng đó.
+- `OwnerId = NULL` nghĩa là **chỉ admin** (master_admin hoặc user_admin) nhìn thấy khách hàng đó.
 - Quyền trên `Collaterals`, `LoanContracts`, `CreditCards`, `RepaymentSchedules` **không có cột chủ sở hữu riêng** — suy ra theo quan hệ tới `Customers`. Đây là quyết định thiết kế có chủ đích: một nguồn sự thật cho quyền sở hữu, tránh lệch dữ liệu.
 
 Bảng `UserRoles` (`01_roles_and_ownership.sql`):
 
 ```
 UserId    uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE
-Role      text NOT NULL CHECK (Role IN ('admin','banker'))
+Role      text NOT NULL CHECK (Role IN ('master_admin','user_admin','user'))
 FullName  text
 CreatedAt timestamptz DEFAULT now()
 ```
 
-Các thao tác quản trị người dùng dùng lại thường xuyên (gán vai trò theo email, bàn giao khách hàng khi banker nghỉ/luân chuyển, thu hồi quyền) nằm ở `03_user_management.sql`. Lưu ý trình tự khi nhân sự nghỉ: **bàn giao khách hàng trước, thu hồi quyền sau** — vì `Customers.OwnerId` là khoá ngoại tới `auth.users(id)`, xoá user khi còn khách gán cho họ sẽ bị khoá ngoại chặn.
+Trigger `trg_guard_last_master_admin` (migration 60) chặn hạ quyền hoặc xóa Master Admin cuối cùng, tránh khóa hệ thống. Các thao tác quản trị người dùng dùng lại thường xuyên (gán vai trò theo email, bàn giao khách hàng khi nhân sự nghỉ/luân chuyển, thu hồi quyền) nằm ở `03_user_management.sql` (vẫn dùng giá trị vai trò cũ, cần đổi sang vai trò mới trước khi dùng lại). Lưu ý trình tự khi nhân sự nghỉ: **bàn giao khách hàng trước, thu hồi quyền sau** — vì `Customers.OwnerId` là khoá ngoại tới `auth.users(id)`, xoá user khi còn khách gán cho họ sẽ bị khoá ngoại chặn.
+
+## 3b. Cờ module theo tài khoản (migration 65)
+
+Hai vai trò quản trị chọn cho từng tài khoản được dùng những **module** nào; module bị tắt bị chặn ở CSDL chứ không chỉ ẩn menu. Bảy module: `credit`, `rates`, `dispatch`, `storage`, `inventory`, `quiz`, `tools`. Danh sách phải khớp ba chỗ: CHECK `UserModules_known_modules` trong `supabase/migrations/65_user_modules.sql`, `MODULE_IDS` trong `src/lib/modules.ts`, và các chính sách `mod_*`.
+
+- Bảng `UserModules(UserId, Modules text[], UpdatedAt, UpdatedBy)`. **Không có dòng = đủ mọi module** (tương thích ngược); mảng rỗng = không module nào.
+- Hàm `has_module(m)` (SECURITY DEFINER, STABLE): chưa đăng nhập → false; `is_admin()` → true; không có dòng → true; ngược lại `m = ANY(Modules)`. Hai vai trò quản trị không bao giờ bị khóa module.
+- Chặn bằng chính sách **RESTRICTIVE** `mod_<module>` (nối AND với chính sách cũ, không sửa chính sách nào), dùng `(SELECT public.has_module('x'))` để tính một lần mỗi câu lệnh. Bảng lãi suất/vốn mở nếu có `rates` HOẶC `credit` (lập khoản vay cần bảng lãi suất). `StorageRepos` chặn theo `Kind` (dispatch/form → `dispatch`; shared/personal → `storage`). `SystemConfig` khóa `hf_config` (token Hugging Face cũ, nay không còn dùng) chỉ đọc được khi có `storage` hoặc `dispatch`.
+- `UserModules`: đọc = chính mình hoặc admin; ghi = admin và dòng đích không phải Master Admin. Chỉ có ý nghĩa với tài khoản cấp User: ghi cờ cho admin không có tác dụng.
+- Tác dụng phụ: `has_module` trả false cho khách chưa đăng nhập nên **đóng luôn** các bảng từng mở cho `anon`/`public` (DisbursementPayees, nhóm bảng Inventory/Statement/Retail, bảng lãi suất).
+- Giới hạn: `tools` chỉ ẩn được ở giao diện (không có bảng riêng); khóa Gemini ở trình duyệt. Tệp nằm ở Google Drive; token Drive do Edge Function `drive-token` cấp theo quyền (ghi cho admin/module `storage`, đọc cho phần còn lại).
+- Gỡ: `supabase/rollbacks/65_user_modules_rollback.sql` xóa các chính sách `mod_*`, giữ bảng cờ. Kiểm bằng PGlite: `src/lib/__tests__/userModulesRls.test.ts`.
+- Áp migration 65 **trước** khi deploy mã mới: thiếu bảng thì tài khoản cấp User không nạp được cờ và thấy lỗi rõ ràng; admin không bị ảnh hưởng.
 
 ## 4. RLS bật 100% bảng — kể cả bảng chưa dùng
 
@@ -91,7 +111,8 @@ SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND rowsecurity = fa
 
 | Hàm | Trả về | Ý nghĩa |
 | :--- | :--- | :--- |
-| `is_admin()` | boolean | `auth.uid()` có phải admin trong `UserRoles` không |
+| `is_admin()` | boolean | `auth.uid()` có vai trò `master_admin` hoặc `user_admin` không (migration 60). Nhiều policy cũ dùng hàm này nên User Admin tự có quyền "gần đầy đủ" |
+| `is_master_admin()` | boolean | Chỉ `master_admin` (migration 60). Dùng cho xóa vĩnh viễn KH, ghi `UserRoles`, ghi `SystemConfig` |
 | `can_access_customer(cid bigint)` | boolean | admin, hoặc `Customers.OwnerId` của `cid` = `auth.uid()` |
 | `can_access_contract(contract_id bigint)` | boolean | admin, hoặc HĐTD → `LoanContracts` → `Customers.OwnerId` = `auth.uid()` |
 
@@ -106,15 +127,27 @@ Từ `02_enable_rls.sql`. Mọi policy đều `TO authenticated` (anon không c�
 | Bảng | Lệnh | USING / WITH CHECK | Ghi chú |
 | :--- | :--- | :--- | :--- |
 | `UserRoles` | SELECT | `UserId = auth.uid() OR is_admin()` | Ai cũng đọc vai trò của chính mình |
-| `UserRoles` | ALL (ghi) | `is_admin()` | Chỉ admin sửa vai trò |
+| `UserRoles` | ALL (ghi) | `is_master_admin()` | Chỉ Master Admin sửa vai trò (migration 60; trước đó `is_admin()`) |
 | `Customers` | SELECT | `is_admin() OR OwnerId = auth.uid()` | |
 | `Customers` | INSERT | `is_admin() OR OwnerId = auth.uid()` | Banker tạo KH **buộc tự đứng tên** chủ sở hữu |
-| `Customers` | UPDATE | như trên (cả USING và WITH CHECK) | Không được "chuyển" KH sang người khác nếu không phải admin |
-| `Customers` | DELETE | `is_admin()` | **Chỉ admin** xoá hồ sơ KH — quyết định có chủ ý cho nghiệp vụ ngân hàng |
+| `Customers` | UPDATE | như trên (cả USING và WITH CHECK) | User không "chuyển" KH sang người khác được (WITH CHECK buộc OwnerId = chính mình); admin thì được |
+| `Customers` | DELETE | `is_master_admin()` | **Chỉ Master Admin** xoá hồ sơ KH (migration 60; trước đó mọi admin) |
+| `SystemConfig` | SELECT | `true` (TO authenticated) | Mọi tài khoản đăng nhập đọc được; anon bị chặn. Khóa `hf_config` còn giữ token Hugging Face cũ (app không còn đọc); nên xóa dòng này và thu hồi token ở Hugging Face |
+| `SystemConfig` | INSERT/UPDATE/DELETE | `is_master_admin()` | Chỉ Master Admin cấu hình |
+| `Dispatches` | SELECT | `true` (TO authenticated) | Kho văn thư/lưu trữ dùng chung |
+| `Dispatches` | INSERT | `OwnerId = auth.uid()` | `OwnerId` có DEFAULT `auth.uid()` nên client không gửi cột này |
+| `Dispatches` | UPDATE | `is_admin() OR OwnerId = auth.uid()` | |
+| `Dispatches` | DELETE | `is_admin()` | Master Admin và User Admin xóa được |
+| `StorageRepos` | SELECT | `Kind IN ('shared','dispatch') OR AssignedUserId = auth.uid() OR is_admin()` | Danh sách kho (thư mục Google Drive): Kho chung và Văn thư ai cũng thấy; kho cá nhân chỉ người được gán và admin |
+| `StorageRepos` | INSERT/UPDATE/DELETE | `is_master_admin()` | Chỉ Master Admin tạo và gán repo |
 | `Collaterals` | ALL | `can_access_customer("CustomerId")` | Suy quyền theo KH |
 | `LoanContracts` | ALL | `can_access_customer("CustomerId")` | |
 | `CreditCards` | ALL | `can_access_customer("CustomerId")` | |
 | `RepaymentSchedules` | ALL | `can_access_contract("ContractId")` | Suy quyền qua HĐTD |
+
+**Sửa repo (migration 67).** Repository ID còn nằm ở `OfficialDocuments."Files"` (mảng JSON, mỗi tệp có `repoId`) và `Dispatches."RepoId"`, nên đổi ID phải đi qua hàm `update_storage_repo(id, name, repo_id, folder)` (SECURITY DEFINER, chỉ Master Admin): đổi `StorageRepos` và cập nhật hai nơi kia trong một giao dịch. Không UPDATE thẳng cột `RepoId`. Hàm không đổi tên thư mục trên Google Drive. Kho Drive luôn tính từ thư mục gốc (`RepoId` là ID thư mục); app không còn dùng cột `Folder`.
+
+> **Giới hạn đã biết:** phân quyền theo repo (ai upload/xóa ở repo nào) chỉ là quy tắc giao diện trong `src/lib/storageRepos.ts`. Token Drive do Edge Function `drive-token` cấp theo vai trò và module (`decideDriveAccess` trong `supabase/functions/drive-token/rules.ts`): admin hoặc có module `storage` nhận quyền ghi (scope `drive`), chỉ có `dispatch` nhận quyền đọc. Token ghi không gắn với một thư mục, nên RLS chỉ che việc *thấy* repo, không chặn ghi vào thư mục khác mà service account truy cập được. Cô lập thật cần proxy ghi qua Edge Function kiểm thư mục đích.
 
 `02_enable_rls.sql` có sẵn khối **HOÀN TÁC KHẨN CẤP** (comment `DISABLE ROW LEVEL SECURITY` cho 6 bảng) phòng khi bật RLS mà app sập. Điều kiện tiên quyết đã ghi trong đầu file 02: **chỉ chạy sau khi frontend đã có luồng đăng nhập hoạt động** — chạy khi chưa có Auth thì `auth.uid()` = NULL nên mọi policy đều chặn, app ngừng hoạt động hoàn toàn.
 
