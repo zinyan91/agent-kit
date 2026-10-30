@@ -85,6 +85,26 @@ test('build fail: bị chặn; build pass: qua', () => {
   assert.equal(push(lam, '-u', 'origin', 'main').status, 0);
 });
 
+test('không có build thì chạy check: check fail bị chặn, check pass thì qua', () => {
+  const lam = repoMoi('check');
+  commit(lam, 'package.json', JSON.stringify({ scripts: { check: 'node -e "process.exit(1)"' } }));
+  const hong = push(lam, '-u', 'origin', 'main');
+  assert.notEqual(hong.status, 0);
+  assert.match(hong.stderr, /npm run check/);
+  commit(lam, 'package.json', JSON.stringify({ scripts: { check: 'node -e "process.exit(0)"' } }));
+  assert.equal(push(lam, '-u', 'origin', 'main').status, 0);
+});
+
+test('có cả build lẫn check: chỉ chạy build', () => {
+  const lam = repoMoi('build-va-check');
+  commit(
+    lam,
+    'package.json',
+    JSON.stringify({ scripts: { build: 'node -e "process.exit(0)"', check: 'node -e "process.exit(1)"' } }),
+  );
+  assert.equal(push(lam, '-u', 'origin', 'main').status, 0);
+});
+
 test('xoá nhánh trên remote: qua, không quét, không build', () => {
   const lam = repoMoi('xoa');
   commit(lam, 'a.txt', 'x\n');

@@ -81,7 +81,8 @@ Claude thấy luật mới ở phiên sau. Codex và Antigravity cần chạy l�
 ## Hook
 
 - `git-hooks/pre-push`, đặt bằng `git config --global core.hooksPath`, chạy ở **mọi** repo: quét bí mật
-  trong các commit sắp push, rồi `npm run build` nếu repo có script `build`. Thoát hiểm cho một dòng:
+  trong các commit sắp push, rồi `npm run build` nếu repo có script `build` (không có thì `npm run check`
+  nếu có). Thoát hiểm cho một dòng:
   thêm `secret-scan-ok` vào cuối dòng. Hook `.git/hooks/pre-push` riêng của repo vẫn được gọi tiếp.
   Repo tự đặt `core.hooksPath` cục bộ (husky…) sẽ **không** chạy hook này.
 - Plugin Claude: tiêm luật, tự cập nhật kit ở máy dùng, chặn SQL huỷ dữ liệu qua MCP, chặn

@@ -44,7 +44,10 @@ function quetBiMat(refs) {
   );
 }
 
-function build(goc) {
+// Repo JS thuần (felix-api) cố ý không có `build`: có script đó là Vercel tự chạy và deploy fail.
+const SCRIPT_KIEM = ['build', 'check'];
+
+function kiemMa(goc) {
   const tepGoi = path.join(goc, 'package.json');
   if (!fs.existsSync(tepGoi)) return;
   let goi;
@@ -53,13 +56,14 @@ function build(goc) {
   } catch {
     return;
   }
-  if (!goi.scripts?.build) return;
-  process.stderr.write('[agent-kit] npm run build trước khi push...\n');
-  const kq = spawnSync('npm', ['run', 'build'], { cwd: goc, encoding: 'utf8', shell: true, maxBuffer: 512 * 1024 * 1024 });
+  const script = SCRIPT_KIEM.find((ten) => goi.scripts?.[ten]);
+  if (!script) return;
+  process.stderr.write(`[agent-kit] npm run ${script} trước khi push...\n`);
+  const kq = spawnSync('npm', ['run', script], { cwd: goc, encoding: 'utf8', shell: true, maxBuffer: 512 * 1024 * 1024 });
   if (kq.status === 0) return;
   const duoi = `${kq.stdout ?? ''}${kq.stderr ?? ''}`.trim().split('\n').slice(-25).join('\n');
   chan(
-    '`npm run build` FAIL. Build fail cục bộ thì Vercel cũng fail và giữ bản cũ trong im lặng.\n\n' +
+    `\`npm run ${script}\` FAIL. Lỗi cục bộ thì bản deploy cũng hỏng; Vercel giữ bản cũ trong im lặng.\n\n` +
       `25 dòng cuối:\n${duoi}`,
   );
 }
@@ -75,6 +79,6 @@ function hookCucBo() {
 const refs = docDongRef(stdin);
 if (refs.length) {
   quetBiMat(refs);
-  build(git('rev-parse', '--show-toplevel').trim());
+  kiemMa(git('rev-parse', '--show-toplevel').trim());
 }
 hookCucBo();
