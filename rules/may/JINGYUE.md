@@ -5,20 +5,28 @@ description: Sự thật về máy dev này — đường dẫn repo, công cụ
 
 # Máy này
 
-## Repo (đo 29/09/2026)
-| Repo | Đường dẫn | Remote |
-|---|---|---|
-| Web admin WinHelper | `D:\AdminWinHelper` | `zinyan91/winhelper-admin` |
-| CustomerManager | `D:\CustomerManager` | `zinyan91/CustomerManager` |
-| Felix PDF | `D:\pdf-toolkit` | `zinyan91/Felix-pdf` |
-| App client WinHelper/Felix (.NET) | `D:\OneDrive - International concept for education\Backup Felix\Felix App\WinHelper` | `zinyan91/Felix` (private) |
-| Bộ skill/hook/luật dùng chung | `D:\agent-kit` | `zinyan91/agent-kit` |
+Windows cài lại ngày 29/10/2026; tên máy cũ là `YING`.
 
-`winhelper-hub` và `winhelper-api` không còn trên máy (có trên GitHub + Vercel).
+## Repo (đo 30/10/2026)
+| Repo | Đường dẫn | Remote | Deploy |
+|---|---|---|---|
+| Felix Web | `D:\felix-platform\felix-web` | `zinyan91/felix-platform` | Vercel |
+| Felix Admin | `D:\felix-platform\felix-admin` | `zinyan91/felix-admin` | Vercel |
+| Felix API (app client gọi) | `D:\felix-platform\felix-api` | `zinyan91/felix-api` | Vercel |
+| Felix Desktop (.NET) | `D:\felix-platform\felix-desktop` | `zinyan91/felix-desktop` | R2, qua script của felix-admin |
+| Felix Partition | `D:\felix-platform\felix-partition` | `zinyan91/felix-partition` | — |
+| Felix PDF | `D:\felix-platform\pdf-toolkit` | `zinyan91/Felix-pdf` | Cloudflare Pages |
+| Felix Office | `D:\felix-platform\felix-office` | **chưa có remote** | Cloudflare Pages |
+| Felix PE | `D:\FelixPE` | `zinyan91/felix-pe` | — |
+| CustomerManager | `D:\CustomerManager` | `zinyan91/CustomerManager` | Vercel |
+| Bộ skill/hook/luật dùng chung | `D:\agent-kit` | `zinyan91/agent-kit` | — |
+| Epic Sea-Horses | `D:\Projects\Epic Sea-Horses` | chưa có remote | — |
+
+`D:\Felix Platform\` (có dấu cách) là chỗ cũ, chỉ còn bản trùng của `pdf-toolkit` và `felix-partition`: không sửa ở đó.
 Sửa luật chung ở `D:\agent-kit\rules`, rồi chạy `node D:\agent-kit\install.mjs` để Codex nhận bản mới.
 
 ## Bẫy môi trường
-- **Kaspersky quét HTTPS**: Node lỗi `self-signed certificate in certificate chain`. Chạy với `NODE_OPTIONS=--use-system-ca`. Cấm `NODE_TLS_REJECT_UNAUTHORIZED=0`. Kaspersky cũng chặn `r2.dev`.
+- **Chủ sở hữu cũ sau khi cài lại Windows**: thư mục chép từ bản cũ mang SID cũ, git báo `dubious ownership` (gặp ở `D:\Felix Platform\felix-partition`). Dùng bản ở `D:\felix-platform`; không đặt `safe.directory '*'`.
 - **ACL Codex sandbox**: tệp do Codex tạo có thể không xoá/đổi tên được ("Permission denied", "unable to unlink"). Không phải tiến trình khoá — đừng tắt tiến trình. Ghi đè tại chỗ, `git rm --cached`; cần xoá thật thì nhờ người dùng.
 - **Kiểm nhánh trước khi tách nhánh riêng**: repo có thể đang đứng ở nhánh feature dở dang, không phải `main`. Tách từ đó rồi gộp vào `main` là đẩy luôn việc dở của người dùng. Tách từ `origin/main`, và tránh `git checkout` qua lại giữa hai nhánh khác xa nhau: tệp mang ACL Codex không gỡ được làm checkout hỏng giữa chừng (cắn 29/09/2026 ở pdf-toolkit; gỡ bằng `git symbolic-ref HEAD` + `git reset` + `git checkout -- .`).
 - **Git Bash đổi `/ten` thành đường dẫn** (`C:/Program Files/Git/ten`) khi làm đối số: gọi CLI có đối số `/…` qua PowerShell.

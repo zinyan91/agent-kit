@@ -73,7 +73,7 @@ Xoá một skill khỏi `skills/` thì lần cài sau tự gỡ junction của n
 
 - `rules/*.md`: luật chung cho mọi máy. Giữ frontmatter `trigger: always_on` (Antigravity cần nó).
 - `rules/may/<TÊN-MÁY>.md`: luật riêng của một máy (đường dẫn repo, bẫy môi trường), tên tệp là tên máy
-  viết hoa (`hostname`). Máy nguồn hiện là `YING`. Máy không có tệp riêng chỉ nhận luật chung.
+  viết hoa (`hostname`). Máy nguồn hiện là `JINGYUE`. Máy không có tệp riêng chỉ nhận luật chung.
 
 Claude thấy luật mới ở phiên sau. Codex và Antigravity cần chạy lại `node install.mjs` (máy dùng: tự
 động khi mở Claude). Tổng luật của một máy ≤ 200 dòng.

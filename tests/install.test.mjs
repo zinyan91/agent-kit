@@ -13,7 +13,7 @@ let gitCauHinh;
 const chay = (...doiSo) =>
   spawnSync(process.execPath, [path.join(KIT, 'install.mjs'), ...doiSo], {
     encoding: 'utf8',
-    env: { ...process.env, AGENT_KIT_NHA: nha, GIT_CONFIG_GLOBAL: gitCauHinh, AGENT_KIT_KHO_LUU: path.join(nha, 'kho-luu'), AGENT_KIT_TEN_MAY: 'YING', AGENT_KIT_BO_PLUGIN: '1' },
+    env: { ...process.env, AGENT_KIT_NHA: nha, GIT_CONFIG_GLOBAL: gitCauHinh, AGENT_KIT_KHO_LUU: path.join(nha, 'kho-luu'), AGENT_KIT_TEN_MAY: 'JINGYUE', AGENT_KIT_BO_PLUGIN: '1' },
   });
 const trongNha = (...p) => path.join(nha, ...p);
 const laJunction = (p) => fs.lstatSync(p).isSymbolicLink();
@@ -41,7 +41,7 @@ test('cài lần đầu: nối skill, luật, hook, gỡ lệnh cũ', () => {
   assert.ok(laJunction(trongNha('.gemini', 'config', 'skills', 'fp')));
   const luatAg = trongNha('.gemini', 'config', 'rules');
   assert.ok(!laJunction(luatAg) && fs.existsSync(path.join(luatAg, '.agent-kit')));
-  assert.ok(fs.existsSync(path.join(luatAg, 'YING.md')) && fs.existsSync(path.join(luatAg, '00-cach-lam-viec.md')));
+  assert.ok(fs.existsSync(path.join(luatAg, 'JINGYUE.md')) && fs.existsSync(path.join(luatAg, '00-cach-lam-viec.md')));
   assert.ok(!fs.existsSync(trongNha('.claude', 'commands', 'fp.md')));
   assert.match(fs.readFileSync(gitCauHinh, 'utf8'), /hooksPath = .*git-hooks/);
 });
@@ -120,7 +120,7 @@ test('junction luật kiểu cũ trỏ về rules/ của kit được thay bằn
   const kq = chay();
   assert.equal(kq.status, 0, kq.stderr);
   assert.ok(!laJunction(luatAg) && fs.existsSync(path.join(luatAg, '.agent-kit')));
-  assert.ok(fs.existsSync(path.join(KIT, 'rules', 'may', 'YING.md')));
+  assert.ok(fs.existsSync(path.join(KIT, 'rules', 'may', 'JINGYUE.md')));
 });
 
 test('thư mục luật Antigravity tự tạo (không đánh dấu): xung đột, không đụng vào', () => {
