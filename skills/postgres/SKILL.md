@@ -41,6 +41,22 @@ inside a sub-select: `using ((select is_team_member(team_id)))`. Put such functi
 not in one the API exposes (Supabase exposes `public` as RPC), and `revoke execute on function ... from
 public, anon` unless a role really needs to call it.
 
+**Grant explicitly (Supabase, from 30 Oct 2026, old projects included).** New tables in `public` no
+longer get automatic grants for `anon`, `authenticated` and `service_role`. Without a grant, the Data API
+answers `42501` before RLS is even checked. A migration that creates a table or view ships its grants,
+RLS and policies together; serial columns also need the sequence grant (identity columns do not).
+
+```sql
+grant select, insert, update, delete on public.orders to authenticated, service_role;
+alter table public.orders enable row level security;
+create policy orders_owner on public.orders for select using ((select auth.uid()) = user_id);
+```
+
+Functions still get `execute` for `public` by default: `revoke execute ... from public, anon`, then
+grant it to the roles that call them. Tables created before the switch keep their grants, but replaying
+old migrations (`db reset`, a fresh project) now creates them without; add a final catch-up migration
+rather than editing applied ones.
+
 **Secrets and service role.** Tables holding secrets are read only server-side with the service role;
 grant nothing on them to `anon` or `authenticated`. Apply least privilege: application roles get the
 commands they need on the tables they need, never ownership.
@@ -127,6 +143,11 @@ select * from events order by id limit 50 offset 10000;
 -- right
 select * from events where id > $last_id order by id limit 50;
 ```
+
+**PostgREST returns at most 1,000 rows per request by default (supabase-js included) and does not say it
+cut the result.** A list, total or report that can pass 1,000 rows comes back short and looks correct.
+Read page by page with `.range(from, to)` until a page has fewer rows than asked, or aggregate in SQL
+(a view or RPC) and return the result.
 
 **Upsert** instead of select-then-insert:
 

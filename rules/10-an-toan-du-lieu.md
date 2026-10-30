@@ -9,10 +9,12 @@ description: An toàn dữ liệu production, xác nhận deploy, và quy tắc 
 - Trước thay đổi lớn (schema, migration, refactor tầng dữ liệu): tạo nhánh backup (`git branch backup-YYYYMMDD-HHMM`).
 - Migration **không phá huỷ**: không xoá bảng/cột/dữ liệu cũ; giữ song song làm bản dự phòng. Cần huỷ thật thì sao lưu (`CREATE TABLE <ten>_backup_YYYYMMDD AS SELECT ...`) và hỏi người dùng trước.
 - Đối soát sau migration: đếm bản ghi và so khớp trường, không kết luận bằng mắt.
+- Supabase từ 30/10/2026: bảng mới trong `public` **không còn tự được GRANT** cho `anon`/`authenticated`/`service_role`. Migration tạo bảng phải kèm GRANT, thiếu thì Data API trả `42501` trước cả RLS. Chi tiết ở skill `postgres`.
+- Đọc qua PostgREST/supabase-js trả tối đa 1000 dòng mỗi lần và **không báo bị cắt**. Danh sách, tổng hợp, báo cáo có thể vượt 1000 dòng thì đọc theo trang (`.range()`) hoặc tính trong SQL.
 
 ## Sau khi push
-- `npm run build` phải pass **trước** khi push. Git hook toàn cục sẽ chặn nếu không.
-- Push thành công ≠ đã deploy: build fail thì Vercel giữ bản cũ trong im lặng. Xác nhận bằng `vercel ls <project>` thấy `● Ready`, hoặc curl endpoint production thấy dấu hiệu của mã mới.
+- `npm run build` (repo không có `build` thì `npm run check`) phải pass **trước** khi push. Git hook toàn cục sẽ chặn nếu không.
+- Push thành công ≠ đã deploy: build fail thì Vercel giữ bản cũ trong im lặng. Xác nhận bằng `vercel ls <project>` thấy `● Ready`, hoặc curl endpoint production thấy dấu hiệu của mã mới. Repo deploy lên Cloudflare Pages bằng `wrangler` thì push không deploy gì cả.
 - **Cấm `git push --no-verify`** và mọi cách vượt hook. Hook chặn thì sửa nguyên nhân.
 
 ## Bí mật & biến môi trường
