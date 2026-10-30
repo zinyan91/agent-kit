@@ -1,8 +1,8 @@
 ---
 name: nha-anh-chatgpt
-description: Thuc hien KE HOACH do ChatGPT web da lap qua cau noi Family Photos (URL dang https://codex.ms365.tools/mcp/<ma>/ke-hoach). Dung khi nguoi dung dua URL do hoac noi "lam theo ke hoach tu ChatGPT".
+description: Thuc hien KE HOACH do ChatGPT web da lap qua cau noi Family Photos (URL dang https://codex.snaplaneai.com/mcp/<ma>/ke-hoach). Dung khi nguoi dung dua URL do hoac noi "lam theo ke hoach tu ChatGPT".
 ---
-Khi nguoi dung dua URL dang https://codex.ms365.tools/mcp/<ma>/ke-hoach (co the kem ?id=...) hoac noi "lam theo ke hoach tu ChatGPT":
+Khi nguoi dung dua URL dang https://codex.snaplaneai.com/mcp/<ma>/ke-hoach (co the kem ?id=...) hoac noi "lam theo ke hoach tu ChatGPT":
 
 1. Doc ke hoach: `curl.exe -s "<URL>"` (van ban, khong can khoa; dung curl.exe vi trong PowerShell `curl` la Invoke-WebRequest).
 2. Ke hoach da duoc ChatGPT suy nghi ky. LAM DUNG tung buoc, KHONG lap ke hoach lai, KHONG doc lan man ngoai
