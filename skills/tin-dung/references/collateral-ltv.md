@@ -93,6 +93,18 @@ Thứ tự quyết định LTV của một tài sản nằm ở `getEffectiveLtv
 
 `isAppraisalUsable(c)` = đúng khi trạng thái là `valid` **hoặc** `expiring_soon`. Nghĩa là *sắp hết hạn vẫn dùng được* (chỉ cảnh báo để banker kịp định giá lại), còn *đã hết hạn* thì bằng 0.
 
+### Tài sản đã tất toán không cảnh báo định giá (`collateralUsage.ts`)
+
+`buildCollateralUsage({ loans, creditContracts, mortgages, today })` xếp mỗi tài sản vào một trong ba trạng thái:
+
+| Trạng thái | Điều kiện |
+| :--- | :--- |
+| `securing` | Gắn với KUNN chưa tất toán, HĐTD chưa đóng và chưa hết hiệu lực, hoặc HĐTC chưa giải chấp |
+| `released` | Từng gắn khoản vay/HĐTD/HĐTC nhưng nay không còn nghĩa vụ nào: khách đã tất toán, lấy tài sản về |
+| `unlinked` | Chưa gắn gì (tài sản mới nhập, đang chuẩn bị hồ sơ) |
+
+`displayAppraisalStatus(c, usageOf)` trả `released` cho tài sản đã tất toán, còn lại giữ `appraisalStatus`. Màn Tài sản bảo đảm dùng hàm này cho nhãn, bộ lọc và bộ đếm cảnh báo. Tài sản `unlinked` **vẫn** cảnh báo hết hạn vì sắp dùng cho hồ sơ mới. Hạn mức quay vòng còn hiệu lực giữ tài sản ở `securing` dù dư nợ 0. Không tải được KUNN hoặc HĐTD thì coi mọi tài sản là `unlinked` (giữ cảnh báo, không giấu) và báo lỗi.
+
 ### Ngày hết hiệu lực được TÍNH LẠI, không đọc cột text
 
 `appraisalExpiryDate(c)` tính từ `AppraisalDate + AppraisalTenorMonths` (cộng tháng thủ công, kẹp ngày theo số ngày thực của tháng đích để tránh tràn ngày). Hàm **cố tình không đọc** cột `AppraisalExpiryDate`.

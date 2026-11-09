@@ -193,9 +193,16 @@ Với mỗi HĐTD:
 
 `totalsOfCreditContracts(summaries, hdtdNumber?)` cộng `granted`/`outstanding`/
 `available` trên các summary; nếu truyền `hdtdNumber` thì lọc theo đúng HĐTD đó
-(so không phân biệt hoa thường, đã trim). `granted` ở đây cộng thẳng
-`contract.ContractAmount` giữa các summary — **an toàn** vì mỗi HĐTD chỉ có một summary
-(đã gom TH1 ở tầng bảng `CreditContracts`), không phải cộng qua từng KUNN.
+(so không phân biệt hoa thường, đã trim). `granted` cộng `contract.ContractAmount` giữa
+các summary — **an toàn** vì mỗi HĐTD chỉ có một summary (đã gom TH1 ở tầng bảng
+`CreditContracts`), không phải cộng qua từng KUNN.
+
+**Hạn mức đã cấp chỉ gồm HĐTD còn dùng được** (`isCurrentGrantedLimit`, từ 09/11/2026):
+khi cộng chung (không truyền `hdtdNumber`), `granted` bỏ HĐTD **đã đóng**, **đã hết hiệu
+lực**, và HĐTD **vay từng lần đã tất toán hết KUNN**. HĐTD hạn mức quay vòng còn hiệu lực
+vẫn tính dù khách đã trả hết nợ (vẫn rút tiếp được); vay từng lần đã ký chưa giải ngân vẫn
+tính. Xem riêng một HĐTD theo số thì giữ mức ghi trên hợp đồng. Trước đây `granted` cộng
+cả HĐTD đã đóng/hết hiệu lực nên khách đã tất toán vẫn hiện "hạn mức đã cấp".
 
 ---
 
