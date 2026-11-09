@@ -275,14 +275,16 @@ remainingBalanceAfterPrepay = max(0, currentBalance − actualPrepayAmount)
 
 **Tỷ lệ phí phạt** — hai chế độ (`feeScheduleType`):
 - `'custom_rate'`: dùng `customPenaltyPercent` (sàn 0).
-- mặc định (`'by_year'`): theo tuổi khoản vay `loanAgeYear` (mặc định 1) →
-  năm 1 = `penaltyYear1` (mặc định **2.0%**), năm 2 = `penaltyYear2` (**1.5%**),
-  năm 3 = `penaltyYear3` (**1.0%**), năm ≥4 = `penaltyYear4Plus` (**0.0%**).
+- mặc định (`'by_year'`): `penaltyPercentForLoanYear(penaltyByYear, loanAgeYear)`.
+  `penaltyByYear` là mảng 5 mức cho năm 1–5 (`PREPAYMENT_FEE_YEARS = 5`), mặc định
+  `DEFAULT_PREPAYMENT_PENALTY_BY_YEAR` = **4% · 3% · 2% · 1% · 0,5%** (theo bảng phí
+  chương trình ở migration 54). Từ năm 6 trở đi **miễn phí** (0%, không áp phí tối
+  thiểu). Năm thiếu trong mảng tính 0; `loanAgeYear < 1` coi là năm 1.
 
 **Tiền phí phạt** (có sàn phí tối thiểu):
 ```
 rawPenalty = round(actualPrepayAmount × activePenaltyPercent / 100)
-penaltyFee = (actualPrepayAmount>0 && rawPenalty < minPenaltyFee) ? minPenaltyFee : rawPenalty
+penaltyFee = (actualPrepayAmount>0 && activePenaltyPercent>0 && rawPenalty < minPenaltyFee) ? minPenaltyFee : rawPenalty
 totalPaymentRequired = actualPrepayAmount + penaltyFee
 ```
 
