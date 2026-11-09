@@ -198,11 +198,19 @@ các summary — **an toàn** vì mỗi HĐTD chỉ có một summary (đã gom 
 `CreditContracts`), không phải cộng qua từng KUNN.
 
 **Hạn mức đã cấp chỉ gồm HĐTD còn dùng được** (`isCurrentGrantedLimit`, từ 09/11/2026):
-khi cộng chung (không truyền `hdtdNumber`), `granted` bỏ HĐTD **đã đóng**, **đã hết hiệu
-lực**, và HĐTD **vay từng lần đã tất toán hết KUNN**. HĐTD hạn mức quay vòng còn hiệu lực
-vẫn tính dù khách đã trả hết nợ (vẫn rút tiếp được); vay từng lần đã ký chưa giải ngân vẫn
-tính. Xem riêng một HĐTD theo số thì giữ mức ghi trên hợp đồng. Trước đây `granted` cộng
-cả HĐTD đã đóng/hết hiệu lực nên khách đã tất toán vẫn hiện "hạn mức đã cấp".
+khi cộng chung (không truyền `hdtdNumber`), `granted` bỏ HĐTD **đã đóng**, HĐTD **hết hiệu
+lực đã tất toán hết KUNN**, và HĐTD **vay từng lần đã tất toán hết KUNN**. HĐTD hạn mức
+quay vòng còn hiệu lực vẫn tính dù khách đã trả hết nợ (vẫn rút tiếp được); vay từng lần đã
+ký chưa giải ngân vẫn tính. Xem riêng một HĐTD theo số thì giữ mức ghi trên hợp đồng.
+
+**HĐTD hết hiệu lực có hai kiểu** (theo người dùng):
+
+| Kiểu | Nghiệp vụ | Hạn mức đã cấp | Nhãn (`hdtdStatusLabel`) / `blockReason` |
+| :--- | :--- | :--- | :--- |
+| Hết hiệu lực, KUNN còn dư nợ | HĐTD vẫn còn, chỉ không giải ngân mới | Tính | HẾT HIỆU LỰC · CÒN DƯ NỢ / "…, còn N KUNN chưa tất toán" |
+| Hết hiệu lực, KUNN đã tất toán hết | Hết, phải tái tục | Không tính | HẾT HIỆU LỰC · CẦN TÁI TỤC / "…, cần tái tục" |
+
+Tài sản khai ở HĐTD hết hiệu lực mà còn KUNN dư nợ vẫn là đang bảo đảm (`collateralUsage.ts`).
 
 ---
 
