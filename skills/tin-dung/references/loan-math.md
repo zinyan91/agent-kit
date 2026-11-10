@@ -153,6 +153,8 @@ Tất toán thật nằm ở màn khoản vay, tách khỏi máy tính "Phân t�
 - **Phí trả nợ trước hạn** (`settlementFee.ts`): hình thức vay lấy theo HĐTD liên kết → `LoanMethod` của KUNN → `ContractType` (0 = hạn mức). `suggestSettlementFee`: **hạn mức tín dụng quay vòng miễn phí**; hình thức khác (kể cả "Hạn mức tín dụng từng lần") theo biểu năm 4% · 3% · 2% · 1% · 0,5% cho năm 1–5, từ năm 6 miễn phí. Năm vay (`loanYearAt`) tính từ ngày giải ngân, tròn năm thì sang năm sau. Cán bộ sửa được tỷ lệ từng khoản.
 - **Số tiền** từng khoản vẫn do `calculateEarlySettlementQuote` tính (gốc còn lại + lãi dồn tích Actual/365 + phí trên gốc còn lại). `buildSettlementLine` chặn khoản **chưa tải được lịch trả nợ** thay vì tính như "chưa phát sinh lịch". `settlementTotals` chỉ cộng khoản tất toán được.
 - **Ghi** (`applyEarlySettlementAPI`): xoá kỳ tương lai, chốt kỳ tất toán, đánh dấu `IsSettled`, `SettledDate`, `CurrentBalance = 0`. Các khoản ghi **tuần tự**; khoản lỗi không làm hỏng khoản đã ghi, hộp thoại giữ khoản lỗi kèm lý do.
+- **Ngày tất toán chung** áp một ngày cho các khoản đang chọn (`applyDateToSelected`); vẫn sửa riêng từng khoản được.
+- **Ước tính trước khi có dữ liệu** (công cụ 10 trong tab tính toán, `settlementEstimate.ts`): nhập tay nhiều khoản (hình thức, dư nợ gốc, lãi suất, ngày giải ngân, ngày trả lãi gần nhất, ngày tất toán). Lãi dồn tích Actual/365 từ ngày trả lãi gần nhất (trống thì từ ngày giải ngân), phí cùng `suggestSettlementFee`. Không ghi gì vào CSDL.
 
 ---
 
