@@ -146,6 +146,14 @@ Sau khi `reduce_monthly`, số `MonthlyPrincipalAmount` khai tay **không còn �
 
 > ⚠️ **Điểm mơ hồ:** trong `generateSchedule`, nhánh chia lại `reduce_monthly` dùng divisor `totalPeriods − i` — **không** cộng ân hạn như `recalculateSchedules`/`buildLoanSchedule`. Xem mục 12.
 
+### Tất toán trước hạn (từ 10/11/2026: nhiều khoản, nhiều ngày, nhiều hình thức vay)
+
+Tất toán thật nằm ở màn khoản vay, tách khỏi máy tính "Phân tích trả nợ trước hạn" (chỉ ước tính). Một lần tất toán chọn được **nhiều KUNN** của khách, **mỗi KUNN một ngày tất toán** và một tỷ lệ phí riêng (`useMultiSettlement`, `MultiSettlementModal`).
+
+- **Phí trả nợ trước hạn** (`settlementFee.ts`): hình thức vay lấy theo HĐTD liên kết → `LoanMethod` của KUNN → `ContractType` (0 = hạn mức). `suggestSettlementFee`: **hạn mức tín dụng quay vòng miễn phí**; hình thức khác (kể cả "Hạn mức tín dụng từng lần") theo biểu năm 4% · 3% · 2% · 1% · 0,5% cho năm 1–5, từ năm 6 miễn phí. Năm vay (`loanYearAt`) tính từ ngày giải ngân, tròn năm thì sang năm sau. Cán bộ sửa được tỷ lệ từng khoản.
+- **Số tiền** từng khoản vẫn do `calculateEarlySettlementQuote` tính (gốc còn lại + lãi dồn tích Actual/365 + phí trên gốc còn lại). `buildSettlementLine` chặn khoản **chưa tải được lịch trả nợ** thay vì tính như "chưa phát sinh lịch". `settlementTotals` chỉ cộng khoản tất toán được.
+- **Ghi** (`applyEarlySettlementAPI`): xoá kỳ tương lai, chốt kỳ tất toán, đánh dấu `IsSettled`, `SettledDate`, `CurrentBalance = 0`. Các khoản ghi **tuần tự**; khoản lỗi không làm hỏng khoản đã ghi, hộp thoại giữ khoản lỗi kèm lý do.
+
 ---
 
 ## 8. Tính lại lịch, giữ lịch sử thu nợ

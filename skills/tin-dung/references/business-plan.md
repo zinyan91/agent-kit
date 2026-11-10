@@ -273,6 +273,8 @@ isFullPrepayment   = actualPrepayAmount >= currentBalance  (khi currentBalance>0
 remainingBalanceAfterPrepay = max(0, currentBalance − actualPrepayAmount)
 ```
 
+**Hạn mức tín dụng** (`isRevolving = true`): miễn phí trả nợ trước hạn, phí 0 và không áp phí tối thiểu, bỏ qua mọi chế độ dưới đây.
+
 **Tỷ lệ phí phạt** — hai chế độ (`feeScheduleType`):
 - `'custom_rate'`: dùng `customPenaltyPercent` (sàn 0).
 - mặc định (`'by_year'`): `penaltyPercentForLoanYear(penaltyByYear, loanAgeYear)`.
